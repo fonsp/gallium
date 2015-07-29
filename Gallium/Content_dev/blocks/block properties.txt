@@ -1,0 +1,15 @@
+mass (in kg) = volume (in cubic dm) * 1.33 (in kg/cubic dm)
+
+derived from CubeSat
+
+blockc: Engine block
+volume = 36.7
+mass = 48.8
+
+blockb: Support block
+volume = 30.1
+mass = 40.0
+
+blocka: ? block
+volume = 71.7
+mass = 95.3

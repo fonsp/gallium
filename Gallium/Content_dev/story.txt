@@ -1,0 +1,11 @@
+==========
+ GALLIIUM
+==========
+
+You're an astronaut, you wake up in space in orbit around earth after a blackout. You have to salvage broken ship components. 
+
+Possible story lines:
+- Earth destroyed by nukes
+- Humanity destroyed by a biological/chemical outbreak/weapon
+- Build a ship capable of landing on earth (heat shield, parachutes)
+- 
