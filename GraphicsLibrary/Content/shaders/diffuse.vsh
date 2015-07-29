@@ -15,8 +15,9 @@ varying float intensity;
 
 void main()
 {
-	intensity = (dot(gl_LightSource[0].position.xyz, gl_Normal) + 1.0) / 2.0;
-	
+	//intensity = (dot(gl_LightSource[0].position.xyz, (gl_ModelViewMatrix * vec4(gl_Normal, 0.0)).xyz) + 1.0) / 2.0;
+	intensity = dot(gl_LightSource[0].position.xyz, normalize((gl_ModelViewMatrix * vec4(gl_Normal, 0.0)).xyz));
+
 	vec4 v = gl_Vertex;
 	v.xyz = v.xyz - cpos;
 	v = gl_ModelViewMatrix * v;

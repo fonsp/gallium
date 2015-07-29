@@ -16,7 +16,7 @@ using GraphicsLibrary.Hud;
 
 namespace GraphicsLibrary
 {
-	public class RenderWindow:GameWindow
+	public class RenderWindow : GameWindow
 	{
 		#region SingleTon
 		public GraphicsProgram program;
@@ -61,19 +61,19 @@ namespace GraphicsLibrary
 		/// </summary>
 		public float lf = 1f;
 
-		public bool enableRelativity = true;
+		public bool enableRelativity = false;
 		/// <summary>
 		/// Enable the Doppler effect
 		/// </summary>
-		public bool enableDoppler = true;
+		public bool enableDoppler = false;
 		/// <summary>
 		/// Enable relativistic brightness
 		/// </summary>
-		public bool enableRelBrightness = true;
+		public bool enableRelBrightness = false;
 		/// <summary>
 		/// Enable relativistic aberration
 		/// </summary>
-		public bool enableRelAberration = true;
+		public bool enableRelAberration = false;
 		/// <summary>
 		/// Smoothed velocity of the camera
 		/// </summary>
@@ -167,8 +167,8 @@ namespace GraphicsLibrary
 
 			try
 			{
-				GL.Light(LightName.Light0, LightParameter.Ambient, new float[] { .2f, .2f, .2f, 1.0f });
-				GL.Light(LightName.Light0, LightParameter.Diffuse, new float[] { .95f, .95f, .95f, 1.0f });
+				GL.Light(LightName.Light0, LightParameter.Ambient, new float[] { .02f, .02f, .02f, 1.0f });
+				GL.Light(LightName.Light0, LightParameter.Diffuse, new float[] { .98f, .98f, .98f, 1.0f });
 				GL.Light(LightName.Light0, LightParameter.Position, Vector4.Normalize(new Vector4(.4f, .9f, .5f, 0.0f)));
 
 				GL.Enable(EnableCap.Lighting);

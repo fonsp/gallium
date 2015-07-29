@@ -116,9 +116,11 @@ namespace GraphicsLibrary.Core
 				else
 				{
 					GL.Translate(parent.derivedPosition);
-					Matrix4 mult = Matrix4.CreateFromQuaternion(derivedOrientation);
+					Matrix4 mult = Matrix4.CreateFromQuaternion(parent.derivedOrientation);
 					GL.MultMatrix(ref mult);
 					GL.Translate(position);
+					mult = Matrix4.CreateFromQuaternion(orientation);
+					GL.MultMatrix(ref mult);
 				}
 				GL.Translate(Camera.Instance.derivedPosition);
 				//GL.Translate((derivedOrientation * new Quaternion(derivedPosition, 0f) * Quaternion.Conjugate(derivedOrientation)).Xyz);

@@ -16,9 +16,12 @@ varying float intensity;
 
 void main()
 {
-	float a = sqrt(intensity);
-	
-	vec4 fragout = texture2D(tex, gl_TexCoord[0].xy) * vec4(vec3(gl_Color.w), 1.0) * vec4(gl_Color.xyz, 1.0) * (vec4(a, a, a, 1.0) * gl_LightSource[0].diffuse + vec4(1.0-a, 1.0-a, 1.0-a, 1.0) * gl_LightSource[0].ambient);
+	vec4 fragout = vec4(vec3(max(sqrt(intensity), 0.0)), 1.0) * gl_LightSource[0].diffuse + gl_LightSource[0].ambient;	// light
+	fragout *= texture2D(tex, gl_TexCoord[0].xy);																		// texture
+	fragout *= vec4(vec3(gl_Color.w), 1.0);																				// fog
+	fragout *= vec4(gl_Color.xyz, 1.0);																					// color
+	fragout.w = 1.0;
+
 	/*if((effects / 2) % 2 == 1)
 	{
 		fragout = fragout * vec4(vec3(1.0 / sqrt(1.0 - bL * bL) + dopp), 1.0);
@@ -32,7 +35,7 @@ void main()
 		fragout = shift;
 	}*/
 
-	a = max(0.0, fragout.r - 1.0);
+	float a = max(0.0, fragout.r - 1.0);
 	fragout.g += a;
 	fragout.b += a;
 	a = max(0.0, fragout.g - 1.0);

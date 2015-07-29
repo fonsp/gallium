@@ -28,7 +28,7 @@ namespace Gallium.Program
 
 			skybox.mesh.material.textureName = "skybox";
 			skybox.isLit = false;
-			skybox.mesh.material.baseColor = new Color4(.2f, .2f, .2f, 1.0f);
+			skybox.mesh.material.baseColor = new Color4(.4f, .4f, .4f, 1.0f);
 
 			cannon.position = new Vector3(100f, 0f, 100f);
 

@@ -5,28 +5,42 @@ uniform float height;
 uniform sampler2D tex;
 uniform sampler2D depthTex;
 
+#define blurN 7
+
 void main()
 {
-	float dx = 2.0 / 1280.0;
-	float dy = 2.0 / 0720.0;
+	float dx = 4.0 / 1920.0;
+	float dy = 4.0 / 1080.0;
 	
 	vec4 sum = vec4(0.0);
 	vec4 fin;
-	float[] pascal = float[7](1.0, 6.0, 15.0, 20.0, 15.0, 6.0, 1.0);
-		
-	for(int x = 0; x < 7; x++)
+
+#if (blurN == 7)
+	float[] pascal = float[blurN](1.0, 6.0, 15.0, 20.0, 15.0, 6.0, 1.0);
+#endif	
+#if (blurN == 9)
+	float[] pascal = float[blurN](1.0, 8.0, 28.0, 56.0, 70.0, 56.0, 28.0, 8.0, 1.0);
+#endif	
+
+	for(int x = 0; x < blurN; x++)
 	{
-		for(int y = 0; y < 7; y++)
+		for(int y = 0; y < blurN; y++)
 		{
-			fin = texture2D(tex, gl_TexCoord[0].xy + vec2((x - 3) * dx, (y - 3) * dy)) - vec4(0.9, 0.9, 0.9, 0.0);
+			fin = texture2D(tex, gl_TexCoord[0].xy + vec2((x - (blurN + 1) / 2) * dx, (y - (blurN - 1) / 2) * dy)) - vec4(0.9, 0.9, 0.9, 0.0);
 			fin.r = max(0.0, fin.r);
 			fin.g = max(0.0, fin.g);
 			fin.b = max(0.0, fin.b);
 			sum = sum + fin * pascal[x] * pascal[y];
 		}
 	}
+
+#if (blurN == 7)
 	sum = 10.0 * sum / 4096.0;
-	
+#endif
+#if (blurN == 9)
+	sum = 10.0 * sum / 65536.0;
+#endif
+
 	gl_FragColor = texture2D(tex, gl_TexCoord[0].xy);
 
 	if(gl_FragColor.r < 0.9) {

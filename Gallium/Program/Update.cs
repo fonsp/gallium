@@ -1,10 +1,13 @@
 ﻿using System;
+using System.Drawing;
+using Gallium.Blocks;
 using GraphicsLibrary;
 using GraphicsLibrary.Collision;
 using GraphicsLibrary.Core;
 using GraphicsLibrary.Input;
 using OpenTK;
 using OpenTK.Graphics;
+using OpenTK.Graphics.OpenGL;
 using OpenTK.Input;
 
 namespace Gallium.Program
@@ -246,13 +249,25 @@ namespace Gallium.Program
 			{
 				ship.ApplyLocalForce(new Vector3(0f, 0f, 100f), timeSinceLastUpdate);
 			}
-			if (InputManager.IsKeyDown(Key.N))
+			if(InputManager.IsKeyDown(Key.N))
 			{
 				ship.ApplyLocalForce(new Vector3(-50f, 0f, 0f), new Vector3(0f, 0f, -200f), timeSinceLastUpdate);
 				ship.ApplyLocalForce(new Vector3(50f, 0f, 0f), new Vector3(0f, 0f, 200f), timeSinceLastUpdate);
-				Console.WriteLine(ship.DeriveInertia(Vector3.UnitY));
 			}
+			if(InputManager.IsKeyDown(Key.M))
+			{
+				Block blockE = (Block) ship.GetChild("blockE");
+				//blockE.facing = Vector3.UnitZ;
+				//blockE.ApplyLocalForce(new Vector3(0f, 0f, -200f), timeSinceLastUpdate);
+				blockE.Pitch(timeSinceLastUpdate);
 
+				GL.Light(LightName.Light0, LightParameter.Diffuse, new float[] {3f, 3f, 3f, 1.0f});
+			}
+			else
+			{
+
+				GL.Light(LightName.Light0, LightParameter.Diffuse, new float[] { .98f, .98f, .98f, 1.0f });
+			}
 			#endregion
 			#region Bobbing
 
@@ -327,11 +342,17 @@ namespace Gallium.Program
 				freezeKeyDown = false;
 			}
 
-			if(InputManager.IsKeyDown(Key.Number0) || InputManager.IsKeyDown(Key.Number8) || InputManager.IsKeyDown(Key.Number9))
+			if(InputManager.IsKeyDown(Key.Number0) || InputManager.IsKeyDown(Key.Number7) || InputManager.IsKeyDown(Key.Number8) || InputManager.IsKeyDown(Key.Number9))
 			{
 				if(!windowKeyDown)
 				{
-					if(InputManager.IsKeyDown(Key.Number8))
+					if(InputManager.IsKeyDown(Key.Number7))
+					{
+						RenderWindow.Instance.Location = new Point(-1920, 0);
+						RenderWindow.Instance.WindowBorder = WindowBorder.Resizable;
+						RenderWindow.Instance.WindowState = WindowState.Fullscreen;
+					}
+					else if(InputManager.IsKeyDown(Key.Number8))
 					{
 						RenderWindow.Instance.WindowBorder = WindowBorder.Resizable;
 						RenderWindow.Instance.WindowState = WindowState.Normal;
@@ -343,6 +364,7 @@ namespace Gallium.Program
 					}
 					else if(InputManager.IsKeyDown(Key.Number0))
 					{
+						RenderWindow.Instance.Location = new Point(0, 0);
 						RenderWindow.Instance.WindowBorder = WindowBorder.Resizable;
 						RenderWindow.Instance.WindowState = WindowState.Fullscreen;
 					}
@@ -354,9 +376,7 @@ namespace Gallium.Program
 				windowKeyDown = false;
 			}
 
-			RenderWindow.Instance.enableRelAberration = !InputManager.IsKeyToggled(Key.Number5);
-			RenderWindow.Instance.enableRelBrightness = !InputManager.IsKeyToggled(Key.Number6);
-			RenderWindow.Instance.enableDoppler = !InputManager.IsKeyToggled(Key.Number7);
+
 			ActionTrigger.Update();
 
 			hudDebug.isVisible =
