@@ -92,6 +92,8 @@ namespace GraphicsLibrary.Core
 		/// Rendering pass, starting at 0.
 		/// </summary>
 		public int renderPass = 0;
+		public bool ignoreDrawDistance = true;
+
 		/// <summary>
 		/// Entity visibility.
 		/// </summary>
@@ -422,10 +424,17 @@ namespace GraphicsLibrary.Core
 		{
 			if(isVisible)
 			{
-				Render(pass);
-				foreach(Node n in children.Values)
+				if(!ignoreDrawDistance && (Camera.Instance.position - derivedPosition).Length > RenderWindow.Instance.drawDistance)
 				{
-					n.StartRender(pass);
+					return;
+				}
+				Render(pass);
+				lock(children)
+				{
+					foreach(Node n in children.Values)
+					{
+						n.StartRender(pass);
+					}
 				}
 			}
 		}

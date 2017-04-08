@@ -13,11 +13,12 @@ namespace GraphicsLibrary.Core
 		public Shader shader;
 		//VBO
 		public Vertex[] vertexArray;
+		public int vertexArrayLength;
 		public bool useVBO = false;
 		public bool hasVBO = false;
 		public uint[] VBOids = new uint[2];
 
-		public override string ToString()
+		/*public override string ToString()
 		{
 			string output = polygonList.Count + "\n";
 			foreach(Polygon p in polygonList)
@@ -29,7 +30,7 @@ namespace GraphicsLibrary.Core
 				}
 			}
 			return output;
-		}
+		}*/
 
 		public void GenerateVBO()
 		{
@@ -49,7 +50,7 @@ namespace GraphicsLibrary.Core
 				return;
 			}
 
-			int stride = BlittableValueType.StrideOf(vertexArray);
+			int stride = BlittableValueType.StrideOf(new Vertex[1]);
 			
 
 			GL.GenBuffers(1, out VBOids[0]);
@@ -61,6 +62,10 @@ namespace GraphicsLibrary.Core
 			GL.BufferData(BufferTarget.ElementArrayBuffer, (IntPtr)(vertexArray.Length * sizeof(uint)), IntPtr.Zero, BufferUsageHint.StaticDraw);
 			GL.BufferSubData(BufferTarget.ElementArrayBuffer, IntPtr.Zero, (IntPtr)(vertexArray.Length * sizeof(uint)), RenderWindow.Instance.elementBase);
 			hasVBO = true;
+			vertexArray = null;
+			polygonList = null;
+			GC.Collect();
+			GC.WaitForPendingFinalizers();
 			Debug.WriteLine("VBO generation complete");
 		}
 

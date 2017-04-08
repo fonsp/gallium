@@ -85,6 +85,7 @@ namespace GraphicsLibrary
 		/// </summary>
 		public double timeMultiplier = 1.0;
 		public int amountOfRenderPasses = 2;
+		public float drawDistance = 300f;
 		/// <summary>
 		/// Default geometry shader
 		/// </summary>
@@ -149,6 +150,8 @@ namespace GraphicsLibrary
 			try
 			{
 				TextureManager.AddTexture("default", @"Content/textures/defaultTexture.png", TextureMinFilter.Linear, TextureMagFilter.Nearest);
+				TextureManager.AddTexture("terrain", @"Content/textures/terrain.png", TextureMinFilter.Linear, TextureMagFilter.Nearest);
+
 
 				GL.BindTexture(TextureTarget.ProxyTexture2D, TextureManager.GetTexture("default"));
 
@@ -167,8 +170,8 @@ namespace GraphicsLibrary
 
 			try
 			{
-				GL.Light(LightName.Light0, LightParameter.Ambient, new float[] { .02f, .02f, .02f, 1.0f });
-				GL.Light(LightName.Light0, LightParameter.Diffuse, new float[] { .98f, .98f, .98f, 1.0f });
+				GL.Light(LightName.Light0, LightParameter.Ambient, new float[] { .5f, .5f, .5f, 1.0f });
+				GL.Light(LightName.Light0, LightParameter.Diffuse, new float[] { .5f, .5f, .5f, 1.0f });
 				GL.Light(LightName.Light0, LightParameter.Position, Vector4.Normalize(new Vector4(.4f, .9f, .5f, 0.0f)));
 
 				GL.Enable(EnableCap.Lighting);

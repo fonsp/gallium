@@ -20,7 +20,7 @@ void main()
 	fragout *= texture2D(tex, gl_TexCoord[0].xy);																		// texture
 	fragout *= vec4(vec3(gl_Color.w), 1.0);																				// fog
 	fragout *= vec4(gl_Color.xyz, 1.0);																					// color
-	fragout.w = 1.0;
+	//fragout.w = 1.0;
 
 	/*if((effects / 2) % 2 == 1)
 	{
@@ -45,6 +45,12 @@ void main()
 	fragout.r += a;
 	fragout.g += a;
 
-	fragout += vec4(vec3(a), 0.0);
-	gl_FragColor = fragout;
+	//fragout += vec4(vec3(a), 0.0);
+
+	float zNear = .01;
+	float zFar = 100000.0;
+
+	gl_FragColor = mix(fragout, vec4(.8,.8,.8,1), min(1.0,(gl_FragCoord.z / gl_FragCoord.w) / 100.0));
+
+	//gl_FragColor = vec4(vec3(), 1.0);
 }

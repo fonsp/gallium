@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Drawing;
-using Gallium.Blocks;
 using GraphicsLibrary;
 using GraphicsLibrary.Collision;
 using GraphicsLibrary.Core;
@@ -17,8 +16,8 @@ namespace Gallium.Program
 		private Vector2 fpsCam = Vector2.Zero;
 		private double bobbingTimer;
 		private double bobbingFactor;
-		private int walkSpeed = 400;
-		private int playerHeight = 170;
+		private int walkSpeed = 2;
+		private int playerHeight = 2;
 		private Vector2 mouseSensitivity = new Vector2(200, 200); //TODO: config
 		private float mouseSensitivityFactor = 1f;
 		private Vector3 cameraBobDelta = Vector3.Zero;
@@ -31,12 +30,11 @@ namespace Gallium.Program
 		{
 			skybox.position = Camera.Instance.position;
 			Camera.Instance.position -= cameraBobDelta;
-			starfield.center = Camera.Instance.position;
 
 
 			if(InputManager.IsKeyDown(Key.R))
 			{
-				Respawn();
+				Console.WriteLine(worldNode.world.GetBlock(Camera.Instance.position));
 			}
 
 			#region FPS camera
@@ -104,7 +102,9 @@ namespace Gallium.Program
 			Vector3 feetPos = Camera.Instance.position;
 			feetPos.Y -= playerHeight * 0.75f;
 
-			foreach(CollisionAABB collisionBox in mapCollision)
+			Camera.Instance.friction = new Vector3(.05f, .5f, .05f);
+
+			/*foreach(CollisionAABB collisionBox in mapCollision)
 			{
 				// Y
 				CollisionRay collisionRay = new CollisionRay(Camera.Instance.position, new Vector3(.00001f, -1, .00001f));
@@ -202,12 +202,21 @@ namespace Gallium.Program
 			{
 				grounded = true;
 				Camera.Instance.position.Y += Math.Min(config.GetInt("riseSpeed") * timeSinceLastUpdate, playerHeight - Camera.Instance.position.Y);
-			}
+			}*/
 
 			#endregion
 			#region Jumping/Gravity
 
-			if(grounded)
+			if(InputManager.IsKeyDown(Key.Space))
+			{
+				Camera.Instance.position.Y += (float)config.GetDouble("jumpForce") * timeSinceLastUpdate;
+			}
+			if(InputManager.IsKeyDown(Key.AltLeft))
+			{
+				Camera.Instance.position.Y -= (float)config.GetDouble("jumpForce") * timeSinceLastUpdate;
+			}
+
+			/*if(grounded)
 			{
 				Camera.Instance.velocity.Y = Math.Max(Camera.Instance.velocity.Y, 0);
 				Camera.Instance.position.Y -= (float)config.GetDouble("groundedCorrection") * timeSinceLastUpdate; //roundoff error correction
@@ -228,47 +237,10 @@ namespace Gallium.Program
 				{
 					Camera.Instance.friction = new Vector3((float)config.GetDouble("playerFriction"), 1, (float)config.GetDouble("playerFriction"));
 				}
-			}
+			}*/
 
 			#endregion
-			#region Ship control
-
-			if(InputManager.IsKeyDown(Key.Left))
-			{
-				ship.ApplyLocalForce(new Vector3(50f, 0f, 0f), new Vector3(0f, 0f, -200f), timeSinceLastUpdate);
-			}
-			if(InputManager.IsKeyDown(Key.Right))
-			{
-				ship.ApplyLocalForce(new Vector3(-50f, 0f, 0f), new Vector3(0f, 0f, -200f), timeSinceLastUpdate);
-			}
-			if(InputManager.IsKeyDown(Key.Up))
-			{
-				ship.ApplyLocalForce(new Vector3(0f, 0f, -200f), timeSinceLastUpdate);
-			}
-			if(InputManager.IsKeyDown(Key.Down))
-			{
-				ship.ApplyLocalForce(new Vector3(0f, 0f, 100f), timeSinceLastUpdate);
-			}
-			if(InputManager.IsKeyDown(Key.N))
-			{
-				ship.ApplyLocalForce(new Vector3(-50f, 0f, 0f), new Vector3(0f, 0f, -200f), timeSinceLastUpdate);
-				ship.ApplyLocalForce(new Vector3(50f, 0f, 0f), new Vector3(0f, 0f, 200f), timeSinceLastUpdate);
-			}
-			if(InputManager.IsKeyDown(Key.M))
-			{
-				Block blockE = (Block) ship.GetChild("blockE");
-				//blockE.facing = Vector3.UnitZ;
-				//blockE.ApplyLocalForce(new Vector3(0f, 0f, -200f), timeSinceLastUpdate);
-				blockE.Pitch(timeSinceLastUpdate);
-
-				GL.Light(LightName.Light0, LightParameter.Diffuse, new float[] {3f, 3f, 3f, 1.0f});
-			}
-			else
-			{
-
-				GL.Light(LightName.Light0, LightParameter.Diffuse, new float[] { .98f, .98f, .98f, 1.0f });
-			}
-			#endregion
+			
 			#region Bobbing
 
 			if(delta == Vector2.Zero || !grounded)
