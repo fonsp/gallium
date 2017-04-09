@@ -51,22 +51,50 @@ namespace GraphicsLibrary.Core
 			}
 
 			int stride = BlittableValueType.StrideOf(new Vertex[1]);
-			
 
-			GL.GenBuffers(1, out VBOids[0]);
+
+
+			//GL.GenBuffers(1, out VBOids[0]); // TODO: Slowwww
+			VBOids[0] = GetNewBuffer();
+
 			GL.BindBuffer(BufferTarget.ArrayBuffer, VBOids[0]);
 			GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr)(vertexArray.Length * stride), vertexArray, BufferUsageHint.StaticDraw);
 
-			GL.GenBuffers(1, out VBOids[1]);
+
+			VBOids[1] = GetNewBuffer();
 			GL.BindBuffer(BufferTarget.ElementArrayBuffer, VBOids[1]);
 			GL.BufferData(BufferTarget.ElementArrayBuffer, (IntPtr)(vertexArray.Length * sizeof(uint)), IntPtr.Zero, BufferUsageHint.StaticDraw);
 			GL.BufferSubData(BufferTarget.ElementArrayBuffer, IntPtr.Zero, (IntPtr)(vertexArray.Length * sizeof(uint)), RenderWindow.Instance.elementBase);
 			hasVBO = true;
 			vertexArray = null;
 			polygonList = null;
-			GC.Collect();
-			GC.WaitForPendingFinalizers();
+			//GC.Collect();
+			//GC.WaitForPendingFinalizers();
 			//Debug.WriteLine("VBO generation complete");
+		}
+
+		public static int bufferCollectionSize = 255;
+		private static List<uint> bufferCollection = new List<uint>();
+
+		private static uint GetNewBuffer()
+		{
+
+			if(bufferCollection.Count == 0)
+			{
+				Stopwatch stopwatch = new Stopwatch();
+				stopwatch.Start();
+
+				uint[] tempBuffer = new uint[bufferCollectionSize];
+				GL.GenBuffers(bufferCollectionSize, tempBuffer);
+				bufferCollection.AddRange(tempBuffer);
+
+				stopwatch.Stop();
+				Console.WriteLine("Buffers generated in {0}ms", stopwatch.ElapsedMilliseconds);
+			}
+
+			uint output = bufferCollection[0];
+			bufferCollection.RemoveAt(0);
+			return output;
 		}
 
 		public void UpdateVBO()

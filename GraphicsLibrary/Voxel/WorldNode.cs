@@ -14,29 +14,33 @@ namespace GraphicsLibrary.Voxel
 	public class WorldNode:Node
 	{
 		public World world;
-		public int hardRadius = 1;
-		public int softRadius = 3;
+		public int hardRadius = 2;
+		public int softRadius = 15;
 		public float viewRadius = 48f;
 
 		Dictionary<IntVector, Entity> generatedEntities = new Dictionary<IntVector, Entity>();
 		Dictionary<IntVector, Thread> constructionThreads = new Dictionary<IntVector, Thread>();
 		Dictionary<IntVector, ConstructionThreadParameters> constructionThreadParameters = new Dictionary<IntVector, ConstructionThreadParameters>();
 		List<IntVector> needUpdate = new List<IntVector>();
+		List<Thread> threadsToStart = new List<Thread>();
 
 		public WorldNode(string name) : base(name)
 		{
 			world = new World();
 		}
 
-		int time = 0;
+		int numberOfThreadsStarted = 0;
+		int currentNumberOfStartedThreads = 0;
 		float donesomethingtimer = 0f;
-		public const float completionDelay = .05f;
+		public const float completionDelay = 0.02f;
 
 		public override void Update(float timeSinceLastUpdate)
 		{
-			time++;
+			numberOfThreadsStarted = 0;
 			IntVector d = new IntVector((int)Math.Floor(Camera.Instance.position.X / 16), (int)Math.Floor(Camera.Instance.position.Z / 16));
 
+			Stopwatch stopwatch = new Stopwatch();
+			
 
 			IntVector i = new IntVector(0, 1);
 			List<IntVector> hardLimitsToComplete = new List<IntVector>();
@@ -59,12 +63,17 @@ namespace GraphicsLibrary.Voxel
 						//Console.WriteLine("NOW AT {0}", dd);
 						if((!generatedEntities.ContainsKey(dd)) && (!constructionThreads.ContainsKey(dd)))
 						{
+							
 							//Console.WriteLine("ConstrThr created at {0} on {1}", dd, time);
 							ConstructionThreadParameters para = new ConstructionThreadParameters(dd);
 							Thread t = new Thread(() => ASyncChunkGenerate(para));
 							constructionThreadParameters.Add(dd, para);
 							constructionThreads.Add(dd, t);
-							t.Start();
+
+
+							//t.Start();
+							threadsToStart.Add(t);
+
 						}
 						if(dist <= hardRadius)
 						{
@@ -80,6 +89,13 @@ namespace GraphicsLibrary.Voxel
 								{
 									Console.WriteLine("Hard radius reached at {0}.", dd);
 									//t.Start();
+
+									if(threadsToStart.Contains(t))
+									{
+										threadsToStart.Remove(t);
+										t.Start();
+									}
+
 									t.Join();
 									hardLimitsToComplete.Add(dd);
 								}
@@ -95,6 +111,19 @@ namespace GraphicsLibrary.Voxel
 				}
 			}
 
+			while(numberOfThreadsStarted < 2 && threadsToStart.Count != 0)
+			{
+				stopwatch.Start();
+
+				threadsToStart[0].Start();
+				threadsToStart.RemoveAt(0);
+				numberOfThreadsStarted++;
+				currentNumberOfStartedThreads++;
+
+				stopwatch.Stop(); if(stopwatch.ElapsedMilliseconds >= 0) { Console.WriteLine("{0}, {1}", constructionThreads.Count, stopwatch.ElapsedMilliseconds); }
+			}
+			
+			
 			// TODO: Make this dynamic.
 			if(constructionThreads.Count != 0 && timeSinceLastUpdate < .03333f)
 			{
@@ -107,11 +136,10 @@ namespace GraphicsLibrary.Voxel
 				donesomethingtimer = 0f;
 			}
 
-			Stopwatch stopwatch = new Stopwatch();
-			stopwatch.Start();
+			
 
 			int count = 0;
-			
+
 			lock(constructionThreadParameters)
 			{
 				List<IntVector> toRemove = new List<IntVector>();
@@ -119,23 +147,30 @@ namespace GraphicsLibrary.Voxel
 				{
 					ConstructionThreadParameters para = pair.Value;
 					IntVector dd = pair.Key;
-					if(hardLimitsToComplete.Contains(dd) || donesomethingtimer == 0f)
+					if(hardLimitsToComplete.Contains(dd) || donesomethingtimer <= 0f)
 					{
 						if(para.done)
 						{
-							donesomethingtimer = completionDelay;
+							
+
 							if(!constructionThreads.ContainsKey(dd))
 							{
 								throw new Exception();
 							}
 							Thread t = constructionThreads[dd];
-							t.Abort();
+
+							donesomethingtimer += completionDelay;
+							
 							para.entity.mesh.GenerateVBO();
+							
 							Add(para.entity);
 							world.AddChunk(para.chunk);
 							generatedEntities.Add(dd, para.entity);
 							toRemove.Add(dd);
+
 							count++;
+
+							currentNumberOfStartedThreads--;
 						}
 					}
 				}
@@ -147,8 +182,8 @@ namespace GraphicsLibrary.Voxel
 			}
 			if(donesomethingtimer == completionDelay)
 			{
-				stopwatch.Stop();
-				Console.WriteLine("Chunk completion: {0} chunk in {1}ms", count, stopwatch.ElapsedMilliseconds);
+				
+				//Console.WriteLine("Chunk completion: {0} chunk in {1}ms", count, stopwatch.ElapsedMilliseconds);
 			}
 
 			float camx = Camera.Instance.position.X - 8f;

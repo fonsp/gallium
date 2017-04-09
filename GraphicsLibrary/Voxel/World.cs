@@ -53,7 +53,7 @@ namespace GraphicsLibrary.Voxel
 		{
 			if(ChunkLoader.ChunkIsSaved(d))
 			{
-				Console.WriteLine("Loaded from file!");
+				//Console.WriteLine("Loaded from file!");
 				return ChunkLoader.LoadChunk(d);
 			}
 			Chunk c = new Chunk(d.x, d.y);

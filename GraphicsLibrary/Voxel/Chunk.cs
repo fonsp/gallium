@@ -8,6 +8,9 @@ using GraphicsLibrary.Core;
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
 
+
+
+
 namespace GraphicsLibrary.Voxel
 {
 	public class Chunk
@@ -227,7 +230,7 @@ namespace GraphicsLibrary.Voxel
 		{
 			if(x < 0 || x > 15 || y < 0 || y > 127 || z < 0 || z > 15)
 			{
-				return 0;
+				return 1;
 			}
 			return cdata[x + 16 * z + 256 * y];
 		}
