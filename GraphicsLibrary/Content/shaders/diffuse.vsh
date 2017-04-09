@@ -3,13 +3,14 @@
 
 uniform float worldTime;
 uniform int effects;
-uniform float bL;
-uniform float bW;
-uniform vec3 vdirL;
-uniform vec3 vdirW;
+//uniform float bL;
+//uniform float bW;
+//uniform vec3 vdirL;
+//uniform vec3 vdirW;
 uniform vec3 cpos;
 uniform mat4 crot;
-varying float dopp;
+
+varying vec3 pos_rel_to_cam;
 
 varying float intensity;
 
@@ -21,7 +22,7 @@ void main()
 	vec4 v = gl_Vertex;
 	v.xyz = v.xyz - cpos;
 	v = gl_ModelViewMatrix * v;
-	if(bL > 0.001)
+	/*if(bL > 0.001)
 	{
 		dopp = (dot(v.xyz, vdirL) / length(v.xyz)) * (bL / sqrt(1.0 - bL * bL));
 	} else {
@@ -35,10 +36,12 @@ void main()
 			v.xyz = v.xyz + vdirW * bW * length(v.xyz);
 			v.xyz = v.xyz * (oldlength / length(v.xyz));
 		}
-	}
+	}*/
+	pos_rel_to_cam = v.xyz;
 	v = crot * v;
     gl_Position = gl_ProjectionMatrix * v;
 	
+
 	gl_FrontColor = vec4(gl_Color.xyz, 1.0 / (gl_Position.w / 2000.0 + 0.9));
 	gl_TexCoord[0] = gl_MultiTexCoord0;
 }

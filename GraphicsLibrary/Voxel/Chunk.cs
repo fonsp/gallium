@@ -13,27 +13,25 @@ namespace GraphicsLibrary.Voxel
 	public class Chunk
 	{
 		public int xx, yy;
-		public byte[,,] cdata;
+		public byte[] cdata;
+		private static Random random = new Random();
 
 		public Chunk(int xx, int yy)
 		{
 			this.xx = xx;
 			this.yy = yy;
-			cdata = new byte[16, 256, 16];
-
-
+			cdata = new byte[16*128*16];
 		}
 
 		public void GenerateData()
 		{
-			for(int y = 0; y < 256; y++)
+			for(int x = 0; x < 16; x++)
 			{
-				for(int x = 0; x < 16; x++)
+				for(int z = 0; z < 16; z++)
 				{
-				
-					for(int z = 0; z < 16; z++)
+					for(int y = 0; y < 128; y++)
 					{
-						cdata[x, y, z] = BlockFunction(x + 16 * xx, y, z + 16 * yy);
+						cdata[x + 16*z + 256*y] = BlockFunction(x + 16 * xx, y, z + 16 * yy);
 					}
 				}
 			}
@@ -41,23 +39,63 @@ namespace GraphicsLibrary.Voxel
 
 		private byte BlockFunction(int x, int y, int z)
 		{
-			Random rnd = new Random();
-			return (byte)Math.Max(0, rnd.Next(y / -16, 8));
+			/*Random rnd = new Random();
+			return (byte)Math.Max(0, rnd.Next(y / -16, 8));*/
+
+			float value = Simplex.simplex_noise(3, x / 200f, y / 400f, z / 200f) + .02f * (y - 60);
+			if(value < 0.9) { return 1; }
+			if(value < 1.1) { return 2; }
+
+			return 0;
+			return (byte)(y / 16);
+			return (byte)Math.Max(0, random.Next(y / -16 - 16, 8));
 		}
 
 		public byte Get(int x, int y, int z)
 		{
-			return cdata[x, y, z];
+			return cdata[x + 16 * z + 256 * y];
 		}
 
 		public void Set(int x, int y, int z, byte value)
 		{
-			cdata[x, y, z] = value;
+			cdata[x + 16 * z + 256 * y] = value;
+		}
+
+		private static int[][][] textureIndices = new int[256][][];
+		static Chunk()
+		{
+			for(int index = 0; index < 256; index++)
+			{
+				int bti = index + (index / 16);
+				textureIndices[index] = new int[2][];
+				textureIndices[index][0] = new int[] { 17 + bti, 01 + bti, 0 + bti };
+				textureIndices[index][1] = new int[] { 17 + bti, 18 + bti, 1 + bti };
+			}
+		}
+
+		private int[] GetTextureIndex(int block, int dir, int AorB)
+		{
+			switch(block)
+			{
+				case 2:
+					if(dir == 0) { return textureIndices[3][AorB]; }
+					if(dir == 1) { return textureIndices[0][AorB]; }
+					return textureIndices[2][AorB];
+					break;
+			}
+			return textureIndices[block][AorB];
 		}
 
 		public Mesh GenerateMesh()
 		{
 			Mesh output = new Mesh();
+			UpdateMesh(output);
+			return output;
+		}
+
+		public void UpdateMesh(Mesh mesh)
+		{
+			mesh.polygonList = new List<Polygon>();
 			List<Vertex> vOuput = new List<Vertex>();
 
 
@@ -79,7 +117,7 @@ namespace GraphicsLibrary.Voxel
 			normals.Add(-Vector3.UnitZ);
 			nindex = 6;
 
-			
+
 			for(int y = 0; y < 17; y++)
 			{
 				for(int x = 0; x < 17; x++)
@@ -87,15 +125,15 @@ namespace GraphicsLibrary.Voxel
 					textCoords.Add(new Vector2(x / 16f, y / 16f));
 				}
 			}
-			tindex = 17*17;
+			tindex = 17 * 17;
 
 			for(int x = 0; x < 16; x++)
 			{
-				for(int y = 0; y < 256; y++)
+				for(int y = 0; y < 128; y++)
 				{
 					for(int z = 0; z < 16; z++)
 					{
-						byte currentBlock = cdata[x, y, z];
+						byte currentBlock = cdata[x + 16 * z + 256 * y];
 						if(currentBlock != 0)
 						{
 							Vector3 corner = new Vector3(x, y, z);
@@ -112,46 +150,44 @@ namespace GraphicsLibrary.Voxel
 							int[] normalIndices = new int[3];
 							int[] textureIndices = new int[3];
 
-							int bti = currentBlock;// + (currentBlock % 16);
+							//int bti = currentBlock + (currentBlock / 16);
 
 							//int[] texA = new int[] { 17 + bti, 1 + bti, 18 + bti };
 							//int[] texB = new int[] { 17 + bti, 0 + bti, 01 + bti };
+							
 
-							int[] texA = new int[] { 17 + bti, 01 + bti, 0 + bti };
-							int[] texB = new int[] { 17 + bti, 18 + bti, 1 + bti };
-
-							if(GetLocalCData(x-1, y, z) == 0)
+							if(GetOutsideRange(x - 1, y, z) == 0)
 							{
-								faces.Add(new Face(new int[] { vindex + 0, vindex + 7, vindex + 4 }, texA, new int[] { 3, 3, 3 }));
-								faces.Add(new Face(new int[] { vindex + 0, vindex + 3, vindex + 7 }, texB, new int[] { 3, 3, 3 }));
+								faces.Add(new Face(new int[] { vindex + 0, vindex + 7, vindex + 4 }, GetTextureIndex(currentBlock, 0, 0), new int[] { 3, 3, 3 }));
+								faces.Add(new Face(new int[] { vindex + 0, vindex + 3, vindex + 7 }, GetTextureIndex(currentBlock, 0, 1), new int[] { 3, 3, 3 }));
 							}
-							if(GetLocalCData(x, y, z+1) == 0)
+							if(GetOutsideRange(x, y, z + 1) == 0)
 							{
-								faces.Add(new Face(new int[] { vindex + 3, vindex + 6, vindex + 7 }, texA, new int[] { 2, 2, 2 }));
-								faces.Add(new Face(new int[] { vindex + 3, vindex + 2, vindex + 6 }, texB, new int[] { 2, 2, 2 }));
+								faces.Add(new Face(new int[] { vindex + 3, vindex + 6, vindex + 7 }, GetTextureIndex(currentBlock, 0, 0), new int[] { 2, 2, 2 }));
+								faces.Add(new Face(new int[] { vindex + 3, vindex + 2, vindex + 6 }, GetTextureIndex(currentBlock, 0, 1), new int[] { 2, 2, 2 }));
 							}
-							if(GetLocalCData(x+1, y, z) == 0)
+							if(GetOutsideRange(x + 1, y, z) == 0)
 							{
 
-								faces.Add(new Face(new int[] { vindex + 2, vindex + 5, vindex + 6 }, texA, new int[] { 0, 0, 0 }));
-								faces.Add(new Face(new int[] { vindex + 2, vindex + 1, vindex + 5 }, texB, new int[] { 0, 0, 0 }));
+								faces.Add(new Face(new int[] { vindex + 2, vindex + 5, vindex + 6 }, GetTextureIndex(currentBlock, 0, 0), new int[] { 0, 0, 0 }));
+								faces.Add(new Face(new int[] { vindex + 2, vindex + 1, vindex + 5 }, GetTextureIndex(currentBlock, 0, 1), new int[] { 0, 0, 0 }));
 							}
-							if(GetLocalCData(x, y, z-1) == 0)
+							if(GetOutsideRange(x, y, z - 1) == 0)
 							{
 
-								faces.Add(new Face(new int[] { vindex + 1, vindex + 4, vindex + 5 }, texA, new int[] { 5, 5, 5 }));
-								faces.Add(new Face(new int[] { vindex + 1, vindex + 0, vindex + 4 }, texB, new int[] { 5, 5, 5 }));
+								faces.Add(new Face(new int[] { vindex + 1, vindex + 4, vindex + 5 }, GetTextureIndex(currentBlock, 0, 0), new int[] { 5, 5, 5 }));
+								faces.Add(new Face(new int[] { vindex + 1, vindex + 0, vindex + 4 }, GetTextureIndex(currentBlock, 0, 1), new int[] { 5, 5, 5 }));
 							}
-							if(GetLocalCData(x, y+1, z) == 0)
+							if(GetOutsideRange(x, y + 1, z) == 0)
 							{
 
-								faces.Add(new Face(new int[] { vindex + 4, vindex + 6, vindex + 5 }, texA, new int[] { 1, 1, 1 }));
-								faces.Add(new Face(new int[] { vindex + 4, vindex + 7, vindex + 6 }, texB, new int[] { 1, 1, 1 }));
+								faces.Add(new Face(new int[] { vindex + 4, vindex + 6, vindex + 5 }, GetTextureIndex(currentBlock, 1, 0), new int[] { 1, 1, 1 }));
+								faces.Add(new Face(new int[] { vindex + 4, vindex + 7, vindex + 6 }, GetTextureIndex(currentBlock, 1, 1), new int[] { 1, 1, 1 }));
 							}
-							if(GetLocalCData(x, y-1, z) == 0)
+							if(GetOutsideRange(x, y - 1, z) == 0)
 							{
-								faces.Add(new Face(new int[] { vindex + 0, vindex + 2, vindex + 3 }, texA, new int[] { 4, 4, 4 }));
-								faces.Add(new Face(new int[] { vindex + 0, vindex + 1, vindex + 2 }, texB, new int[] { 4, 4, 4 }));
+								faces.Add(new Face(new int[] { vindex + 0, vindex + 2, vindex + 3 }, GetTextureIndex(currentBlock, 2, 0), new int[] { 4, 4, 4 }));
+								faces.Add(new Face(new int[] { vindex + 0, vindex + 1, vindex + 2 }, GetTextureIndex(currentBlock, 2, 1), new int[] { 4, 4, 4 }));
 							}
 
 							vindex += 8;
@@ -176,21 +212,24 @@ namespace GraphicsLibrary.Voxel
 					Debugger.Break();
 				}
 				vOuput.AddRange(vertexArr);
-				output.polygonList.Add(new Polygon(vertexArr));
+				mesh.polygonList.Add(new Polygon(vertexArr));
 			}
-			output.vertexArray = vOuput.ToArray();
-			output.vertexArrayLength = output.vertexArray.Length;
-			Debug.WriteLine("Obj conversion complete: " + faces.Count + " faces were converted.");
-			return output;
+			mesh.vertexArray = vOuput.ToArray();
+			mesh.vertexArrayLength = mesh.vertexArray.Length;
+			//Debug.WriteLine("Obj conversion complete: " + faces.Count + " faces were converted.");
+			faces = null;
+			vertices = null;
+			vOuput = null;
+			GC.Collect();
 		}
 
-		private byte GetLocalCData(int x, int y, int z)
+		private byte GetOutsideRange(int x, int y, int z)
 		{
-			if(x < 0 || x > 15 || y < 0 || y > 255 || z < 0 || z > 15)
+			if(x < 0 || x > 15 || y < 0 || y > 127 || z < 0 || z > 15)
 			{
 				return 0;
 			}
-			return cdata[x, y, z];
+			return cdata[x + 16 * z + 256 * y];
 		}
 	}
 }

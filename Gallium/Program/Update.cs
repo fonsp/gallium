@@ -269,17 +269,21 @@ namespace Gallium.Program
 			#endregion
 			#region Other
 
-			Vector3 raydir = Vector3.Zero;
+			/*Vector3 raydir = Vector3.Zero;
 			raydir.Z = (float)-Math.Cos(fpsCam.X);
 			raydir.X = (float)Math.Sin(fpsCam.X);
 			raydir.Y = (float)Math.Tan(fpsCam.Y);
-			raydir.Normalize();
-
+			raydir.Normalize();*/
+			Vector3 raydir = -Vector3.UnitZ;
+			Quaternion conjugated = Camera.Instance.orientation;
+			conjugated.Conjugate();
+			raydir = (conjugated * (new Quaternion(raydir, 0f)) * Camera.Instance.orientation).Xyz;
+			
 			if(!InputManager.IsButtonDown(MouseButton.Right))
 			{
 				if(mouseDown)
 				{
-					Camera.Instance.position += 500f * raydir;
+					Camera.Instance.position += 50f * raydir;
 				}
 				mouseDown = false;
 				monster.isVisible = false;
@@ -288,7 +292,7 @@ namespace Gallium.Program
 			{
 				mouseDown = true;
 				monster.isVisible = true;
-				monster.position = 500f * raydir + Camera.Instance.derivedPosition - new Vector3(0, playerHeight, 0);
+				monster.position = 50f * raydir + Camera.Instance.derivedPosition;
 				monster.velocity = RenderWindow.Instance.smoothedVelocity;
 				//monster.position = new Vector3(500, 0, 0);
 			}
@@ -328,6 +332,8 @@ namespace Gallium.Program
 					{
 						RenderWindow.Instance.WindowBorder = WindowBorder.Resizable;
 						RenderWindow.Instance.WindowState = WindowState.Normal;
+						//worldNode.UnloadChunk(new GraphicsLibrary.Voxel.IntVector(0, 0));
+						worldNode.UnloadAll();
 					}
 					else if(InputManager.IsKeyDown(Key.Number9))
 					{
@@ -346,6 +352,15 @@ namespace Gallium.Program
 			else
 			{
 				windowKeyDown = false;
+			}
+
+			if(InputManager.IsKeyDown(Key.E))
+			{
+				worldNode.SetBlock(Camera.Instance.position, (byte)new Random().Next(10));
+			}
+			if(InputManager.IsKeyDown(Key.Q))
+			{
+				worldNode.SetBlock(Camera.Instance.position, 0);
 			}
 
 

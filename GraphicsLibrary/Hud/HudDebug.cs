@@ -38,7 +38,7 @@ namespace GraphicsLibrary.Hud
 			NewField("display", 7, AlignMode.Left, "Display: ", "");
 			NewField("window", 8, AlignMode.Left, "Window: ", "");
 			NewField("vsync", 9, AlignMode.Left, "VSync: ", "");
-
+			
 			NewField("tl", 0, AlignMode.Right, "Local time: ", " s");
 			NewField("tw", 1, AlignMode.Right, "World time: ", " s");
 			NewField("td", 2, AlignMode.Right, "Ahead by: ", " s");
@@ -122,10 +122,12 @@ namespace GraphicsLibrary.Hud
 			{
 				fTime -= 0.5f;
 				fps = fCount * 2;
-				fpsGraph.value = (byte)((fps * 256) / 1000);
+				fpsGraph.value = (byte)((fps * 256) / 120);
 				fCount = 0;
 			}
 			fTime += timeSinceLastUpdate;
+
+			fpsGraph.value = (timeSinceLastUpdate == 0) ? (byte)255 : (byte)Math.Min(255, (1/timeSinceLastUpdate) * 256 / 120);
 
 			fields["fps"].value = fps.ToString("D");
 			fields["position"].value = Camera.Instance.derivedPosition.X.ToString("F1") + ", " +
@@ -136,24 +138,13 @@ namespace GraphicsLibrary.Hud
 			fields["display"].value = RenderWindow.Instance.Width.ToString("D") + "x" + RenderWindow.Instance.Height.ToString("D");
 			fields["window"].value = RenderWindow.Instance.WindowState + ", " + RenderWindow.Instance.WindowBorder;
 			fields["vsync"].value = RenderWindow.Instance.VSync.ToString();
-
-			fields["tl"].value = RenderWindow.Instance.localTime.ToString("F2");
+			
 			fields["tw"].value = RenderWindow.Instance.worldTime.ToString("F2");
-			fields["td"].value = (RenderWindow.Instance.worldTime - RenderWindow.Instance.localTime).ToString("F2");
-			fields["lf"].value = RenderWindow.Instance.lf.ToString("F3");
-			fields["warp"].value = Math.Pow(RenderWindow.Instance.b, 1.0 / 3.0).ToString("F3");
-			fields["v"].value = RenderWindow.Instance.v.ToString("F1");
-			fields["vc"].value = RenderWindow.Instance.b.ToString("F4");
-			fields["c"].value = RenderWindow.Instance.c.ToString("F1");
 			fields["timeMult"].value = RenderWindow.Instance.timeMultiplier.ToString("F4");
 
-			fields["enAb"].value = RenderWindow.Instance.enableRelAberration ? "on " : "off";
-			fields["enBr"].value = RenderWindow.Instance.enableRelBrightness ? "on " : "off";
-			fields["enDo"].value = RenderWindow.Instance.enableDoppler ? "on " : "off";
-
-			xGraph.value = (byte)((256 * Camera.Instance.position.X) / 4096);
-			yGraph.value = (byte)((256 * Camera.Instance.position.Y) / 4096);
-			zGraph.value = (byte)((256 * Camera.Instance.position.Z) / 4096);
+			xGraph.value = (byte)((256 * Camera.Instance.position.X) / 16);
+			yGraph.value = (byte)((256 * Camera.Instance.position.Y) / 16);
+			zGraph.value = (byte)((256 * Camera.Instance.position.Z) / 16);
 		}
 	}
 }

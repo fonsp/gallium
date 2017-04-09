@@ -41,6 +41,7 @@ namespace Gallium.Program
 
 			testHueScale.mesh = ObjConverter.ConvertObjToMesh(File.ReadAllText(@"Content/models/monsterUVd.obj"), new Vector3(101, -19, 205));
 			monster.mesh = ObjConverter.ConvertObjToMesh(File.ReadAllText(@"Content/models/monsterUVd.obj"), new Vector3(101, -19, 205));
+			monster.scale = new Vector3(.1f, .1f, .1f);
 			skybox.mesh = ObjConverter.ConvertObjToMesh(File.ReadAllText(@"Content/models/skybox3.obj"));
 
 			//mapCollision.AddRange(ObjConverter.ConvertObjToAABBarray(File.ReadAllText(@"Content/models/map1/collision.obj")));

@@ -7,6 +7,7 @@ using GraphicsLibrary.Core;
 using System.Threading;
 using GraphicsLibrary.Timing;
 using System.Diagnostics;
+using OpenTK;
 
 namespace GraphicsLibrary.Voxel
 {
@@ -20,7 +21,7 @@ namespace GraphicsLibrary.Voxel
 		Dictionary<IntVector, Entity> generatedEntities = new Dictionary<IntVector, Entity>();
 		Dictionary<IntVector, Thread> constructionThreads = new Dictionary<IntVector, Thread>();
 		Dictionary<IntVector, ConstructionThreadParameters> constructionThreadParameters = new Dictionary<IntVector, ConstructionThreadParameters>();
-		Dictionary<IntVector, Entity> needUpdate = new Dictionary<IntVector, Entity>();
+		List<IntVector> needUpdate = new List<IntVector>();
 
 		public WorldNode(string name) : base(name)
 		{
@@ -28,14 +29,17 @@ namespace GraphicsLibrary.Voxel
 		}
 
 		int time = 0;
+		float donesomethingtimer = 0f;
+		public const float completionDelay = .05f;
 
 		public override void Update(float timeSinceLastUpdate)
 		{
 			time++;
 			IntVector d = new IntVector((int)Math.Floor(Camera.Instance.position.X / 16), (int)Math.Floor(Camera.Instance.position.Z / 16));
 
-			
+
 			IntVector i = new IntVector(0, 1);
+			List<IntVector> hardLimitsToComplete = new List<IntVector>();
 
 			for(int dist = 0; dist <= softRadius; dist++)
 			{
@@ -45,6 +49,13 @@ namespace GraphicsLibrary.Voxel
 				{
 					for(int b = 0; b < Math.Max(2*dist, 1); b++)
 					{
+						if(needUpdate.Contains(dd))
+						{
+							ChunkUpdate(dd);
+							needUpdate.Remove(dd);
+							donesomethingtimer = completionDelay;
+						}
+
 						//Console.WriteLine("NOW AT {0}", dd);
 						if((!generatedEntities.ContainsKey(dd)) && (!constructionThreads.ContainsKey(dd)))
 						{
@@ -70,6 +81,7 @@ namespace GraphicsLibrary.Voxel
 									Console.WriteLine("Hard radius reached at {0}.", dd);
 									//t.Start();
 									t.Join();
+									hardLimitsToComplete.Add(dd);
 								}
 							}
 							
@@ -84,23 +96,34 @@ namespace GraphicsLibrary.Voxel
 			}
 
 			// TODO: Make this dynamic.
-			Thread.Sleep(10);
+			if(constructionThreads.Count != 0 && timeSinceLastUpdate < .03333f)
+			{
+				Thread.Sleep(10);
+			}
+
+			donesomethingtimer -= timeSinceLastUpdate;
+			if(donesomethingtimer <= 0f)
+			{
+				donesomethingtimer = 0f;
+			}
 
 			Stopwatch stopwatch = new Stopwatch();
 			stopwatch.Start();
-			bool donesomething = false;
+
+			int count = 0;
+			
 			lock(constructionThreadParameters)
 			{
 				List<IntVector> toRemove = new List<IntVector>();
 				foreach(KeyValuePair<IntVector, ConstructionThreadParameters> pair in constructionThreadParameters)
 				{
-					if(!donesomething)
-					{ 
-						ConstructionThreadParameters para = pair.Value;
-						IntVector dd = pair.Key;
+					ConstructionThreadParameters para = pair.Value;
+					IntVector dd = pair.Key;
+					if(hardLimitsToComplete.Contains(dd) || donesomethingtimer == 0f)
+					{
 						if(para.done)
 						{
-							donesomething = true;
+							donesomethingtimer = completionDelay;
 							if(!constructionThreads.ContainsKey(dd))
 							{
 								throw new Exception();
@@ -112,6 +135,7 @@ namespace GraphicsLibrary.Voxel
 							world.AddChunk(para.chunk);
 							generatedEntities.Add(dd, para.entity);
 							toRemove.Add(dd);
+							count++;
 						}
 					}
 				}
@@ -121,20 +145,22 @@ namespace GraphicsLibrary.Voxel
 					constructionThreadParameters.Remove(dd);
 				}
 			}
-			if(donesomething)
+			if(donesomethingtimer == completionDelay)
 			{
 				stopwatch.Stop();
-				Console.WriteLine("Chunk completion: {0}ms", stopwatch.ElapsedMilliseconds);
+				Console.WriteLine("Chunk completion: {0} chunk in {1}ms", count, stopwatch.ElapsedMilliseconds);
 			}
 
 			float camx = Camera.Instance.position.X - 8f;
 			float camz = Camera.Instance.position.Z - 8f;
-			float distSquared = viewRadius * viewRadius;
+			float radiusSquared = viewRadius * viewRadius;
 
 			foreach(KeyValuePair<string, Node> pair in children)
 			{
 				Node child = pair.Value;
-				child.isVisible = ((camx - child.derivedPosition.X)* (camx - child.derivedPosition.X) + (camz - child.derivedPosition.Z)* (camz - child.derivedPosition.Z) < distSquared);
+				float chunkDistSquared = (camx - child.derivedPosition.X) * (camx - child.derivedPosition.X) + (camz - child.derivedPosition.Z) * (camz - child.derivedPosition.Z);
+				//child.isVisible = (chunkDistSquared < radiusSquared);
+				
 			}
 		}
 
@@ -172,6 +198,102 @@ namespace GraphicsLibrary.Voxel
 			//cent.mesh.GenerateVBO(); ////FIXIXXXXX
 			para.done = true;
 			//Console.WriteLine("Thread COMPLETED at {0}", para.d);
+		}
+
+		private void ChunkUpdate(IntVector d)
+		{
+			// TOOD: ASync?
+			Chunk chunk = world.GetTempChunk(d);
+			Entity entity = generatedEntities[d];
+			chunk.UpdateMesh(entity.mesh);
+			//entity.mesh.useVBO = true;
+			//entity.mesh.material.textureName = "terrain";
+			entity.mesh.UpdateVBO();
+		}
+
+		public byte GetBlock(int ix, int iy, int iz)
+		{
+			return world.GetBlock(ix, iy, iz);
+		}
+
+		public byte GetBlock(float x, float y, float z)
+		{
+			return world.GetBlock(x, y, z);
+		}
+
+		public byte GetBlock(Vector3 position)
+		{
+			return world.GetBlock(position);
+		}
+
+		public void SetBlock(int ix, int iy, int iz, byte value)
+		{
+			IntVector d = world.SetBlock(ix, iy, iz, value);
+			if(!needUpdate.Contains(d))
+			{
+				needUpdate.Add(d);
+			}
+		}
+
+		public void SetBlock(float x, float y, float z, byte value)
+		{
+			SetBlock((int)Math.Floor(x), (int)Math.Floor(y), (int)Math.Floor(z), value);
+		}
+
+		public void SetBlock(Vector3 position, byte value)
+		{
+			SetBlock(position.X, position.Y, position.Z, value);
+		}
+
+		public void FinishAllThreadwork()
+		{
+			foreach(KeyValuePair<IntVector, Thread> pair in constructionThreads)
+			{
+				pair.Value.Join();
+			}
+			while(constructionThreads.Count != 0)
+			{
+				Update(.1f);
+			}
+		}
+
+		public void UnloadChunk(IntVector d)
+		{
+			if(constructionThreads.ContainsKey(d))
+			{
+				constructionThreads[d].Abort();
+				constructionThreads.Remove(d);
+				constructionThreadParameters.Remove(d);
+			}
+			if(needUpdate.Contains(d))
+			{
+				needUpdate.Remove(d);
+			}
+
+
+			Entity entity = generatedEntities[d];
+			entity.mesh.RemoveVBO();
+			RemoveChild(entity.name);
+			entity = null;
+			generatedEntities.Remove(d);
+
+			Chunk chunk = world.GetChunk(d);
+			ChunkLoader.SaveChunk(chunk);
+			world.RemoveChunk(d);
+			chunk = null;
+
+
+
+			GC.Collect();
+		}
+
+		public void UnloadAll()
+		{
+			FinishAllThreadwork();
+			while(generatedEntities.Count != 0)
+			{
+				UnloadChunk(generatedEntities.First().Key);
+			}
 		}
 	}
 

@@ -66,7 +66,59 @@ namespace GraphicsLibrary.Core
 			polygonList = null;
 			GC.Collect();
 			GC.WaitForPendingFinalizers();
-			Debug.WriteLine("VBO generation complete");
+			//Debug.WriteLine("VBO generation complete");
+		}
+
+		public void UpdateVBO()
+		{
+			if(!useVBO)
+			{
+				Debug.WriteLine("WARNING: VBO update failed: Mesh is using immediate mode");
+				return;
+			}
+			if(!hasVBO)
+			{
+				Debug.WriteLine("WARNING: VBO update failed: no VBO exists");
+				return;
+			}
+			if(vertexArray == null)
+			{
+				Debug.WriteLine("WARNING: VBO update failed: vertexArray is null");
+				return;
+			}
+
+			int stride = BlittableValueType.StrideOf(new Vertex[1]);
+
+
+			GL.BindBuffer(BufferTarget.ArrayBuffer, VBOids[0]);
+			GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr)(vertexArray.Length * stride), vertexArray, BufferUsageHint.StaticDraw);
+
+			GL.BindBuffer(BufferTarget.ElementArrayBuffer, VBOids[1]);
+			GL.BufferData(BufferTarget.ElementArrayBuffer, (IntPtr)(vertexArray.Length * sizeof(uint)), IntPtr.Zero, BufferUsageHint.StaticDraw);
+			GL.BufferSubData(BufferTarget.ElementArrayBuffer, IntPtr.Zero, (IntPtr)(vertexArray.Length * sizeof(uint)), RenderWindow.Instance.elementBase);
+
+			hasVBO = true;
+			vertexArray = null;
+			polygonList = null;
+			GC.Collect();
+			GC.WaitForPendingFinalizers();
+			//Debug.WriteLine("VBO generation complete");
+		}
+
+		public void RemoveVBO()
+		{
+			if(!useVBO)
+			{
+				Debug.WriteLine("WARNING: VBO removal failed: Mesh is using immediate mode");
+				return;
+			}
+			if(!hasVBO)
+			{
+				Debug.WriteLine("WARNING: VBO removal failed: VBO does not exist");
+				return;
+			}
+
+			GL.DeleteBuffers(2, VBOids);
 		}
 
 		public static Mesh DuplicateFrom(Mesh template)

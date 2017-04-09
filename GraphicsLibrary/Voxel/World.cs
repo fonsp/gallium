@@ -51,6 +51,11 @@ namespace GraphicsLibrary.Voxel
 
 		public static Chunk GenerateTempChunkAt(IntVector d)
 		{
+			if(ChunkLoader.ChunkIsSaved(d))
+			{
+				Console.WriteLine("Loaded from file!");
+				return ChunkLoader.LoadChunk(d);
+			}
 			Chunk c = new Chunk(d.x, d.y);
 			c.GenerateData();
 			return c;
@@ -77,14 +82,28 @@ namespace GraphicsLibrary.Voxel
 			return GenerateChunkAt(d);
 		}
 
+		public Chunk GetTempChunk(IntVector d)
+		{
+			if(generatedChunks.ContainsKey(d))
+			{
+				return generatedChunks[d];
+			}
+			return GenerateTempChunkAt(d);
+		}
+
 		public Chunk GetChunk(int x, int y)
 		{
 			return GetChunk(new IntVector(x, y));
 		}
 
+		public void RemoveChunk(IntVector d)
+		{
+			generatedChunks.Remove(d);
+		}
+
 		public byte GetBlock(int ix, int iy, int iz)
 		{
-			if(iy < 0 || iy > 255)
+			if(iy < 0 || iy > 127)
 			{
 				return 0;
 			}
@@ -104,5 +123,31 @@ namespace GraphicsLibrary.Voxel
 			return GetBlock(position.X, position.Y, position.Z);
 		}
 
+		public void SetBlockSilent(int ix, int iy, int iz, byte value)
+		{
+			if(iy < 0 || iy > 127)
+			{
+				return;
+			}
+
+			int xx = (ix < 0) ? ((ix - 15) / 16) : (ix / 16);
+			int yy = (iz < 0) ? ((iz - 15) / 16) : (iz / 16);
+
+			GetChunk(xx, yy).Set(ix - 16 * xx, iy, iz - 16 * yy, value);
+		}
+
+		public IntVector SetBlock(int ix, int iy, int iz, byte value)
+		{
+			int xx = (ix < 0) ? ((ix - 15) / 16) : (ix / 16);
+			int yy = (iz < 0) ? ((iz - 15) / 16) : (iz / 16);
+			IntVector output = new IntVector(xx, yy);
+			
+			if(iy < 0 || iy > 127)
+			{
+				return output;
+			}
+			GetChunk(xx, yy).Set(ix - 16 * xx, iy, iz - 16 * yy, value);
+			return output;
+		}
 	}
 }

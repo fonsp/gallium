@@ -46,7 +46,7 @@ namespace Gallium.Program
 
 			#endregion
 
-			Camera.Instance.position = new Vector3(0, 250, 0);
+			Camera.Instance.position = new Vector3(0, 80, 0);
 			Camera.Instance.ZNear = .01f;
 			//Camera.Instance.ZFar = 100f;
 

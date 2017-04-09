@@ -330,8 +330,8 @@ namespace GraphicsLibrary.Core
 		{
 			if(children.ContainsValue(node))
 			{
-				node = null;
 				children.Remove(node.name); //TODO: performance
+				node = null;
 			}
 		}
 
@@ -426,7 +426,7 @@ namespace GraphicsLibrary.Core
 			{
 				if(!ignoreDrawDistance && (Camera.Instance.position - derivedPosition).Length > RenderWindow.Instance.drawDistance)
 				{
-					return;
+					
 				}
 				Render(pass);
 				lock(children)

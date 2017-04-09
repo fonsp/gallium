@@ -86,6 +86,10 @@ namespace GraphicsLibrary
 		public double timeMultiplier = 1.0;
 		public int amountOfRenderPasses = 2;
 		public float drawDistance = 300f;
+
+		public float fogStart = 160f;
+		public float fogEnd = 640f;
+		public Color4 fogColor = Color4.White;
 		/// <summary>
 		/// Default geometry shader
 		/// </summary>
@@ -172,7 +176,7 @@ namespace GraphicsLibrary
 			{
 				GL.Light(LightName.Light0, LightParameter.Ambient, new float[] { .5f, .5f, .5f, 1.0f });
 				GL.Light(LightName.Light0, LightParameter.Diffuse, new float[] { .5f, .5f, .5f, 1.0f });
-				GL.Light(LightName.Light0, LightParameter.Position, Vector4.Normalize(new Vector4(.4f, .9f, .5f, 0.0f)));
+				GL.Light(LightName.Light0, LightParameter.Position, Vector4.Normalize(new Vector4(.2f, .9f, .5f, 0.0f)));
 
 				GL.Enable(EnableCap.Lighting);
 				GL.Enable(EnableCap.Light0);
@@ -470,31 +474,35 @@ namespace GraphicsLibrary
 
 			Shader.diffuseShaderCompiled.SetUniform("bW", b);
 			Shader.unlitShaderCompiled.SetUniform("bW", b);
-			Shader.particleShaderCompiled.SetUniform("bW", b);
-			Shader.wireframeShaderCompiled.SetUniform("bW", b);
-			Shader.collisionShaderCompiled.SetUniform("bW", b);
+			//Shader.particleShaderCompiled.SetUniform("bW", b);
+			//Shader.wireframeShaderCompiled.SetUniform("bW", b);
+			//Shader.collisionShaderCompiled.SetUniform("bW", b);
 
 			Vector3 vDir = smoothedVelocity.Normalized();
 
 			Shader.diffuseShaderCompiled.SetUniform("vdirW", vDir);
 			Shader.unlitShaderCompiled.SetUniform("vdirW", vDir);
-			Shader.particleShaderCompiled.SetUniform("vdirW", vDir);
-			Shader.wireframeShaderCompiled.SetUniform("vdirW", vDir);
-			Shader.collisionShaderCompiled.SetUniform("vdirW", vDir);
+			//Shader.particleShaderCompiled.SetUniform("vdirW", vDir);
+			//Shader.wireframeShaderCompiled.SetUniform("vdirW", vDir);
+			//Shader.collisionShaderCompiled.SetUniform("vdirW", vDir);
 
 			Shader.diffuseShaderCompiled.SetUniform("cpos", Camera.Instance.position);
 			Shader.unlitShaderCompiled.SetUniform("cpos", Camera.Instance.position);
-			Shader.particleShaderCompiled.SetUniform("cpos", Camera.Instance.position);
-			Shader.wireframeShaderCompiled.SetUniform("cpos", Camera.Instance.position);
-			Shader.collisionShaderCompiled.SetUniform("cpos", Camera.Instance.position);
+			//Shader.particleShaderCompiled.SetUniform("cpos", Camera.Instance.position);
+			//Shader.wireframeShaderCompiled.SetUniform("cpos", Camera.Instance.position);
+			//Shader.collisionShaderCompiled.SetUniform("cpos", Camera.Instance.position);
 
 			Matrix4 cRot = Matrix4.CreateFromQuaternion(Camera.Instance.derivedOrientation);
 
 			Shader.diffuseShaderCompiled.SetUniform("crot", cRot);
 			Shader.unlitShaderCompiled.SetUniform("crot", cRot);
-			Shader.particleShaderCompiled.SetUniform("crot", cRot);
-			Shader.wireframeShaderCompiled.SetUniform("crot", cRot);
-			Shader.collisionShaderCompiled.SetUniform("crot", cRot);
+			//Shader.particleShaderCompiled.SetUniform("crot", cRot);
+			//Shader.wireframeShaderCompiled.SetUniform("crot", cRot);
+			//Shader.collisionShaderCompiled.SetUniform("crot", cRot);
+
+			Shader.diffuseShaderCompiled.SetUniform("fogStart", fogStart);
+			Shader.diffuseShaderCompiled.SetUniform("fogEnd", fogEnd);
+			Shader.diffuseShaderCompiled.SetUniform("fogColor", fogColor);
 
 			#endregion
 			#region 3D
@@ -833,7 +841,7 @@ namespace GraphicsLibrary
 						smoothedVelocity = Vector3.Zero;
 						smoothFactor = 4000f;
 						timeMultiplier = 1.0;
-						Camera.Instance.position = new Vector3(2700, 250, -6075);
+						Camera.Instance.position = new Vector3(0, 80, 0);
 						break;
 					case "list":
 					case "help":

@@ -3,22 +3,25 @@
 
 uniform float worldTime;
 uniform int effects;
-uniform float bL;
-uniform float bW;
-uniform vec3 vdirL;
-uniform vec3 vdirW;
+//uniform float bL;
+//uniform float bW;
+//uniform vec3 vdirL;
+//uniform vec3 vdirW;
 uniform vec3 cpos;
 uniform mat4 crot;
-varying float dopp;
 uniform sampler2D tex;
+uniform float fogStart;
+uniform float fogEnd;
+uniform vec4 fogColor;
 
+varying vec3 pos_rel_to_cam;
 varying float intensity;
 
 void main()
 {
 	vec4 fragout = vec4(vec3(max(sqrt(intensity), 0.0)), 1.0) * gl_LightSource[0].diffuse + gl_LightSource[0].ambient;	// light
 	fragout *= texture2D(tex, gl_TexCoord[0].xy);																		// texture
-	fragout *= vec4(vec3(gl_Color.w), 1.0);																				// fog
+	//fragout *= vec4(vec3(gl_Color.w), 1.0);																				// fog
 	fragout *= vec4(gl_Color.xyz, 1.0);																					// color
 	//fragout.w = 1.0;
 
@@ -47,10 +50,9 @@ void main()
 
 	//fragout += vec4(vec3(a), 0.0);
 
-	float zNear = .01;
-	float zFar = 100000.0;
-
-	gl_FragColor = mix(fragout, vec4(.8,.8,.8,1), min(1.0,(gl_FragCoord.z / gl_FragCoord.w) / 100.0));
-
+	//float dist = gl_FragCoord.z / gl_FragCoord.w;
+	float dist = length(pos_rel_to_cam);
+	gl_FragColor = mix(fragout, fogColor, max(0.0, min(1.0, (dist - fogStart) / (fogEnd - fogStart))));
+	//gl_FragColor.rgb = pos_rel_to_cam.xyz / 10.0;
 	//gl_FragColor = vec4(vec3(), 1.0);
 }
