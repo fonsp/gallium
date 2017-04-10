@@ -77,10 +77,47 @@ namespace GraphicsLibrary.Core
 		public float width;
 		public float height;
 
+		public Vector3 directionUp
+		{
+			get
+			{
+				return (Quaternion.Conjugate(orientation) * new Quaternion(0f, 1f, 0f, 0f) * orientation).Xyz;
+			}
+		}
+
+		public Vector3 directionRight
+		{
+			get
+			{
+				return (Quaternion.Conjugate(orientation) * new Quaternion(1f, 0f, 0f, 0f) * orientation).Xyz;
+			}
+		}
+
+		public Vector3 directionFront
+		{
+			get
+			{
+				return (Quaternion.Conjugate(orientation) * new Quaternion(0f, 0f, -1f, 0f) * orientation).Xyz;
+			}
+		}
+
+		public void GetDirections(out Vector3 directionUp, out Vector3 directionRight, out Vector3 directionFront)
+		{
+			Quaternion conjugated = Quaternion.Conjugate(orientation);
+			directionFront = (conjugated * new Quaternion(0f, 0f, -1f, 0f) * orientation).Xyz;
+			directionUp = (conjugated * new Quaternion(0f, 1f, 0f, 0f) * orientation).Xyz;
+			directionRight = Vector3.Cross(directionFront, directionUp);
+		}
+
 		public Camera(string name)
 			: base(name)
 		{
 
+		}
+
+		public override void Update(float timeSinceLastUpdate)
+		{
+			
 		}
 	}
 }

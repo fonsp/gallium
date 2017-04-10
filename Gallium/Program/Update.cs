@@ -274,10 +274,9 @@ namespace Gallium.Program
 			raydir.X = (float)Math.Sin(fpsCam.X);
 			raydir.Y = (float)Math.Tan(fpsCam.Y);
 			raydir.Normalize();*/
-			Vector3 raydir = -Vector3.UnitZ;
-			Quaternion conjugated = Camera.Instance.orientation;
-			conjugated.Conjugate();
-			raydir = (conjugated * (new Quaternion(raydir, 0f)) * Camera.Instance.orientation).Xyz;
+
+			
+			Vector3 raydir = Node.directionFront;
 			
 			if(!InputManager.IsButtonDown(MouseButton.Right))
 			{
@@ -292,7 +291,7 @@ namespace Gallium.Program
 			{
 				mouseDown = true;
 				monster.isVisible = true;
-				monster.position = 50f * raydir + Camera.Instance.derivedPosition;
+				monster.position = 500f * raydir + Camera.Instance.derivedPosition;
 				monster.velocity = RenderWindow.Instance.smoothedVelocity;
 				//monster.position = new Vector3(500, 0, 0);
 			}

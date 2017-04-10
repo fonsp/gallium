@@ -419,6 +419,7 @@ namespace GraphicsLibrary
 				Camera.Instance.UpdateNode((float)timeSinceLastUpdate);
 			}
 			HudBase.Instance.Update((float)(e.Time * timeMultiplier));
+			Node.directionsComputed = false;
 		}
 
 		protected override void OnRenderFrame(FrameEventArgs e)

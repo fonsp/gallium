@@ -14,8 +14,8 @@ namespace GraphicsLibrary.Voxel
 	public class WorldNode:Node
 	{
 		public World world;
-		public int hardRadius = 2;
-		public int softRadius = 15;
+		public int hardRadius = 3;
+		public int softRadius = 3;
 		public float viewRadius = 48f;
 
 		Dictionary<IntVector, Entity> generatedEntities = new Dictionary<IntVector, Entity>();
@@ -32,6 +32,8 @@ namespace GraphicsLibrary.Voxel
 		int numberOfThreadsStarted = 0;
 		int currentNumberOfStartedThreads = 0;
 		float donesomethingtimer = 0f;
+
+		// TODO: This could probably be dynamic.
 		public const float completionDelay = 0.02f;
 
 		public override void Update(float timeSinceLastUpdate)
@@ -111,7 +113,9 @@ namespace GraphicsLibrary.Voxel
 				}
 			}
 
-			while(numberOfThreadsStarted < 2 && threadsToStart.Count != 0)
+
+			// TODO: 1? Should be more. Some thread starts cost ~20ms for some reason, while others cost < 2ms.
+			while(numberOfThreadsStarted < 1 && threadsToStart.Count != 0)
 			{
 				stopwatch.Start();
 
@@ -190,6 +194,13 @@ namespace GraphicsLibrary.Voxel
 			float camz = Camera.Instance.position.Z - 8f;
 			float radiusSquared = viewRadius * viewRadius;
 
+			Vector3 dirUp, dirRight, dirFront;
+			Camera.Instance.GetDirections(out dirUp, out dirRight, out dirFront);
+
+
+
+
+
 			foreach(KeyValuePair<string, Node> pair in children)
 			{
 				Node child = pair.Value;
@@ -198,6 +209,8 @@ namespace GraphicsLibrary.Voxel
 				
 			}
 		}
+
+		
 
 		/*public void GenerateEntityIfNeeded(IntVector d)
 		{
@@ -225,8 +238,10 @@ namespace GraphicsLibrary.Voxel
 			//Console.WriteLine("Thread STARTED at {0}", para.d);
 			para.chunk = World.GenerateTempChunkAt(para.d);
 			para.entity = new Entity("C." + para.d.x + "." + para.d.y);
-			para.entity.position = new OpenTK.Vector3(16 * para.d.x, 0, 16 * para.d.y);
+			para.entity.position = new Vector3(16 * para.d.x, 0, 16 * para.d.y);
 			para.entity.ignoreDrawDistance = false;
+			para.entity.occlude = true;
+			para.entity.occlusionOffset = new Vector3(8f, 0f, 8f);
 			para.entity.mesh = para.chunk.GenerateMesh();
 			para.entity.mesh.useVBO = true;
 			para.entity.mesh.material.textureName = "terrain";
