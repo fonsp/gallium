@@ -38,23 +38,12 @@ namespace GraphicsLibrary.Hud
 			NewField("display", 7, AlignMode.Left, "Display: ", "");
 			NewField("window", 8, AlignMode.Left, "Window: ", "");
 			NewField("vsync", 9, AlignMode.Left, "VSync: ", "");
-			
-			NewField("tl", 0, AlignMode.Right, "Local time: ", " s");
-			NewField("tw", 1, AlignMode.Right, "World time: ", " s");
-			NewField("td", 2, AlignMode.Right, "Ahead by: ", " s");
 
-			NewField("lf", 4, AlignMode.Right, "Lorentz factor: ", "");
-			NewField("warp", 5, AlignMode.Right, "Warp factor: ", "");
-			NewField("v", 6, AlignMode.Right, "v: ", " /s");
-			NewField("vc", 7, AlignMode.Right, "v/c: ", "");
-			NewField("c", 8, AlignMode.Right, "c: ", " /s");
-			NewField("timeMult", 9, AlignMode.Right, "timeMult: ", "");
+            NewField("tw", 0, AlignMode.Right, "World time: ", " s");
+            NewField("occludecount", 2, AlignMode.Right, "Occluded: ", "");
+            NewField("threadnum", 3, AlignMode.Right, "Working threads: ", "");
 
-			NewField("enAb", 11, AlignMode.Right, "Relativistic aberration: ", "");
-			NewField("enBr", 12, AlignMode.Right, "Relativistic brightness: ", "");
-			NewField("enDo", 13, AlignMode.Right, "Doppler effect: ", "");
-
-			fpsGraph.position.Y = 11 * 14;
+            fpsGraph.position.Y = 11 * 14;
 			Add(fpsGraph);
 			xGraph.position.Y = 12 * 14 + 128;
 			xGraph.color = Color4.Red;
@@ -113,6 +102,8 @@ namespace GraphicsLibrary.Hud
 		private int fCount = 0;
 		private float fTime = 0f;
 
+        public static int occlusionStatOccluded, occlusionStatTotal, threadNum;
+
 		public override void Update(float timeSinceLastUpdate)
 		{
 			base.Update(timeSinceLastUpdate);
@@ -140,7 +131,10 @@ namespace GraphicsLibrary.Hud
 			fields["vsync"].value = RenderWindow.Instance.VSync.ToString();
 			
 			fields["tw"].value = RenderWindow.Instance.worldTime.ToString("F2");
-			fields["timeMult"].value = RenderWindow.Instance.timeMultiplier.ToString("F4");
+
+            fields["occludecount"].value = occlusionStatOccluded + "/" + occlusionStatTotal + " (" + 100*occlusionStatOccluded/Math.Max(1,occlusionStatTotal) + "%)";
+            occlusionStatOccluded = occlusionStatTotal = 0;
+            fields["threadnum"].value = threadNum.ToString();
 
 			xGraph.value = (byte)((256 * Camera.Instance.position.X) / 16);
 			yGraph.value = (byte)((256 * Camera.Instance.position.Y) / 16);

@@ -11,7 +11,7 @@ namespace GraphicsLibrary.Voxel
 	{
 		static ChunkLoader()
 		{
-			if(!Directory.Exists("wolrd"))
+			if(!Directory.Exists("world"))
 			{
 				Directory.CreateDirectory("world");
 			}
@@ -25,6 +25,7 @@ namespace GraphicsLibrary.Voxel
 
 		public static bool ChunkIsSaved(IntVector d)
 		{
+            return false;
 			return File.Exists("world/c" + d.x + "c" + d.y + ".dat");
 		}
 

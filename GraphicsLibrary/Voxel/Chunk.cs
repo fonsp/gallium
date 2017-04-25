@@ -45,7 +45,9 @@ namespace GraphicsLibrary.Voxel
 			/*Random rnd = new Random();
 			return (byte)Math.Max(0, rnd.Next(y / -16, 8));*/
 
-			float value = Simplex.simplex_noise(3, x / 200f, y / 400f, z / 200f) + .02f * (y - 60);
+			float value = .5f * Simplex.simplex_noise(1, x / 100f, y / 200f, z / 100f) + 
+                .5f * Simplex.simplex_noise(1, x/20f, y/20f, z/20f) +
+                .015f * (y - 60);
 			if(value < 0.9) { return 1; }
 			if(value < 1.1) { return 2; }
 

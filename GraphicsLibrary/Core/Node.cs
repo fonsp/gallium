@@ -421,7 +421,6 @@ namespace GraphicsLibrary.Core
 			position = newPos;
 		}
 
-
 		public static Vector3 directionUp, directionRight, directionFront, occlusionTop, occlusionRight, occlusionBottom, occlusionLeft,
 			occlusionTAlt, occlusionRAlt, occlusionBAlt, occlusionLAlt;
 		internal static bool directionsComputed = false;
@@ -469,6 +468,7 @@ namespace GraphicsLibrary.Core
 			{
 				if(occlude)
 				{
+                    Hud.HudDebug.occlusionStatTotal++;
 					if(!directionsComputed)
 					{
 						Camera.Instance.GetDirections(out directionUp, out directionRight, out directionFront);
@@ -487,7 +487,8 @@ namespace GraphicsLibrary.Core
 					}
 					if(IsOccluded())
 					{
-						//Console.WriteLine(name + "occluded!");
+                        //Console.WriteLine(name + "occluded!");
+                        Hud.HudDebug.occlusionStatOccluded++;
 						return;
 					}
 				}

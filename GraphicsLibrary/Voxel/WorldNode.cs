@@ -15,7 +15,7 @@ namespace GraphicsLibrary.Voxel
 	{
 		public World world;
 		public int hardRadius = 3;
-		public int softRadius = 3;
+		public int softRadius = 10;
 		public float viewRadius = 48f;
 
 		Dictionary<IntVector, Entity> generatedEntities = new Dictionary<IntVector, Entity>();
@@ -208,6 +208,8 @@ namespace GraphicsLibrary.Voxel
 				//child.isVisible = (chunkDistSquared < radiusSquared);
 				
 			}
+
+            Hud.HudDebug.threadNum = constructionThreads.Count();
 		}
 
 		
@@ -241,7 +243,8 @@ namespace GraphicsLibrary.Voxel
 			para.entity.position = new Vector3(16 * para.d.x, 0, 16 * para.d.y);
 			para.entity.ignoreDrawDistance = false;
 			para.entity.occlude = true;
-			para.entity.occlusionOffset = new Vector3(8f, 0f, 8f);
+			para.entity.occlusionOffset = new Vector3(8f, 64f, 8f);
+            para.entity.occlusionRadius = 65f;
 			para.entity.mesh = para.chunk.GenerateMesh();
 			para.entity.mesh.useVBO = true;
 			para.entity.mesh.material.textureName = "terrain";
