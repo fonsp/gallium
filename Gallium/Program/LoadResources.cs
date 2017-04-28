@@ -13,6 +13,7 @@ namespace Gallium.Program
 		private Entity skybox = new Entity("skybox");
 		private Entity monster = new Entity("monster");
 		private Entity testHueScale = new Entity("testHueScale");
+        private Entity screen = new Entity("screen");
 		private WorldNode worldNode = new WorldNode("world");
 		private HudDebug hudDebug;
 		private HudImage crosshair = new HudImage("crosshair", "crosshair0");
@@ -37,12 +38,13 @@ namespace Gallium.Program
 			TextureManager.AddTexture("playerTexture", @"Content/textures/player.png");
 			TextureManager.AddTexture("testimage", @"Content/textures/testimage.png");
 			TextureManager.AddTexture("star", @"Content/textures/star.png");
-			
+            TextureManager.AddTexture("screen", @"Content/textures/testimage.png");
 
 			testHueScale.mesh = ObjConverter.ConvertObjToMesh(File.ReadAllText(@"Content/models/monsterUVd.obj"), new Vector3(101, -19, 205));
 			monster.mesh = ObjConverter.ConvertObjToMesh(File.ReadAllText(@"Content/models/monsterUVd.obj"), new Vector3(101, -19, 205));
 			monster.scale = new Vector3(.1f, .1f, .1f);
 			skybox.mesh = ObjConverter.ConvertObjToMesh(File.ReadAllText(@"Content/models/skybox3.obj"));
+            screen.mesh = ObjConverter.ConvertObjToMesh(File.ReadAllText(@"Content/models/slide.obj"));
 
 			//mapCollision.AddRange(ObjConverter.ConvertObjToAABBarray(File.ReadAllText(@"Content/models/map1/collision.obj")));
 		}

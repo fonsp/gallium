@@ -12,7 +12,7 @@ namespace GraphicsLibrary.Content
 	/// </summary>
 	public static class TextureManager
 	{
-		static readonly Dictionary<string, int> mTexCache;
+		internal static readonly Dictionary<string, int> mTexCache;
 
 		/// <summary>
 		/// The number of loaded textures

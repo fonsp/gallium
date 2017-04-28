@@ -14,8 +14,8 @@ namespace GraphicsLibrary.Voxel
 	public class WorldNode:Node
 	{
 		public World world;
-		public int hardRadius = 3;
-		public int softRadius = 10;
+		public int hardRadius = 1;
+		public int softRadius = 2;
 		public float viewRadius = 48f;
 
 		Dictionary<IntVector, Entity> generatedEntities = new Dictionary<IntVector, Entity>();
@@ -124,7 +124,7 @@ namespace GraphicsLibrary.Voxel
 				numberOfThreadsStarted++;
 				currentNumberOfStartedThreads++;
 
-				stopwatch.Stop(); if(stopwatch.ElapsedMilliseconds >= 0) { Console.WriteLine("{0}, {1}", constructionThreads.Count, stopwatch.ElapsedMilliseconds); }
+				//stopwatch.Stop(); if(stopwatch.ElapsedMilliseconds >= 0) { Console.WriteLine("{0}, {1}", constructionThreads.Count, stopwatch.ElapsedMilliseconds); }
 			}
 			
 			

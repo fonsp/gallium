@@ -128,7 +128,11 @@
     <Compile Include="Voxel\World.cs" />
     <Compile Include="Voxel\WorldNode.cs" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Content Include="Content\shaders\shadow.vsh">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
   <ItemGroup>
     <None Include="Content\shaders\blur.fsh">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -177,6 +181,9 @@
     </None>
     <None Include="Content\shaders\hud.vsh">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="Content\shaders\shadow.fsh">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Content\shaders\ssao.fsh">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>

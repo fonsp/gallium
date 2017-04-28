@@ -90,13 +90,22 @@ namespace GraphicsLibrary
 		public float fogStart = 160f;
 		public float fogEnd = 640f;
 		public Color4 fogColor = Color4.White;
+        public Vector3 lightDir = new Vector3(2.2354324f, 2, 1.01243f);
+
 		/// <summary>
 		/// Default geometry shader
 		/// </summary>
 		public Shader defaultShader = Shader.diffuseShader;
 		public uint[] elementBase = new uint[1000000];
-		public uint fboHandle, colorTexture, depthTexture, depthRenderbuffer, ditherTexture;
-		public bool initialized = false;
+        public uint fboHandle, colorTexture, depthTexture, depthRenderbuffer, ditherTexture, shadowTexture, shadowBuffer;
+        public uint fboHandle2, colorTexture2, depthTexture2, depthRenderbuffer2, ditherTexture2, shadowTexture2, shadowBuffer2;
+        public int shadowSize = 2048;
+        public float shadowDistance = 300f, shadowHeight = 100f;
+        public bool drawShadows = true, enableAmbientOcclusion = true, enableTextures = true;
+        public Color4 lightColor = Color4.FromHsv(new Vector4(48f/360f, .47f, 1f, 1f)), darkColor  = Color4.FromHsv(new Vector4(192f/360f, .47f, 1f, 1f));
+        public float lightStrength = 1.9f, darkStrength = .2f;
+
+        public bool initialized = false;
 		private float focalDistance;
 
 		public RenderWindow(string windowName, int width, int height)
@@ -110,7 +119,7 @@ namespace GraphicsLibrary
 
 		}
 		public RenderWindow(string windowName)
-			: this(windowName, 1280, 720)
+			: this(windowName, 880, 600)
 		{ }
 
 		public RenderWindow()
@@ -126,7 +135,6 @@ namespace GraphicsLibrary
 			try
 			{
 				GL.ClearColor(Color.Black);
-
 				GL.ShadeModel(ShadingModel.Smooth);
 				GL.Hint(HintTarget.PerspectiveCorrectionHint, HintMode.Nicest);
 				//GL.Enable(EnableCap.ColorMaterial);
@@ -174,11 +182,12 @@ namespace GraphicsLibrary
 
 			try
 			{
-				GL.Light(LightName.Light0, LightParameter.Ambient, new float[] { .5f, .5f, .5f, 1.0f });
-				GL.Light(LightName.Light0, LightParameter.Diffuse, new float[] { .5f, .5f, .5f, 1.0f });
-				GL.Light(LightName.Light0, LightParameter.Position, Vector4.Normalize(new Vector4(.2f, .9f, .5f, 0.0f)));
+				GL.Light(LightName.Light0, LightParameter.Ambient, new float[] { darkStrength * darkColor.R, darkStrength * darkColor.G, darkStrength * darkColor.B, 1.0f });
+				GL.Light(LightName.Light0, LightParameter.Diffuse, new float[] { lightStrength * lightColor.R, lightStrength * lightColor.G, lightStrength * lightColor.B, 1.0f });
+                //GL.Light(LightName.Light0, LightParameter.Position, Vector4.Normalize(new Vector4(.2f, .9f, .5f, 0.0f)));
+                GL.Light(LightName.Light0, LightParameter.Position, Vector4.Normalize(new Vector4(2f, 2f, 1f, 0.0f)));
 
-				GL.Enable(EnableCap.Lighting);
+                GL.Enable(EnableCap.Lighting);
 				GL.Enable(EnableCap.Light0);
 			}
 			catch(Exception exception)
@@ -222,8 +231,18 @@ namespace GraphicsLibrary
 				GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba8, Width, Height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, IntPtr.Zero);
 				GL.BindTexture(TextureTarget.Texture2D, 0);
 
-				// Create depth Texture
-				GL.ActiveTexture(TextureUnit.Texture1);
+                /*GL.ActiveTexture(TextureUnit.Texture5);
+                GL.GenTextures(1, out colorTexture2);
+                GL.BindTexture(TextureTarget.Texture2D, colorTexture2);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Clamp);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Clamp);
+                GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba8, shadowSize, shadowSize, 0, PixelFormat.Rgba, PixelType.UnsignedByte, IntPtr.Zero);
+                GL.BindTexture(TextureTarget.Texture2D, 0);*/
+
+                // Create depth Texture
+                GL.ActiveTexture(TextureUnit.Texture1);
 				GL.GenTextures(1, out depthTexture);
 				GL.BindTexture(TextureTarget.Texture2D, depthTexture);
 				GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
@@ -234,9 +253,22 @@ namespace GraphicsLibrary
 				GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.DepthComponent32, Width, Height, 0, PixelFormat.DepthComponent, PixelType.Float, IntPtr.Zero);
 				GL.BindTexture(TextureTarget.Texture2D, 0);
 
-				GL.ActiveTexture(TextureUnit.Texture0);
+                GL.ActiveTexture(TextureUnit.Texture6);
+                GL.GenTextures(1, out depthTexture2);
+                GL.BindTexture(TextureTarget.Texture2D, depthTexture2);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Clamp);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Clamp);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureCompareMode, (int)TextureCompareMode.None);
+                GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.DepthComponent16, shadowSize, shadowSize, 0, PixelFormat.DepthComponent, PixelType.Float, IntPtr.Zero);
+                //GL.BindTexture(TextureTarget.Texture2D, 0);
 
-				//TODO: test for GL Error here (might be unsupported format)
+                GL.ActiveTexture(TextureUnit.Texture0);
+
+                //TODO: test for GL Error here (might be unsupported format)
+
+                
 
 				// Create an FBO and attach the textures
 				GL.Ext.GenFramebuffers(1, out fboHandle);
@@ -247,8 +279,16 @@ namespace GraphicsLibrary
 				GL.Ext.FramebufferTexture2D(FramebufferTarget.FramebufferExt, FramebufferAttachment.DepthAttachment, TextureTarget.Texture2D, depthTexture, 0);
 				GL.ActiveTexture(TextureUnit.Texture0);
 
-				// Dither texture sample
-				GL.ActiveTexture(TextureUnit.Texture1);
+                GL.Ext.GenFramebuffers(1, out fboHandle2);
+                GL.Ext.BindFramebuffer(FramebufferTarget.FramebufferExt, fboHandle2);
+                GL.ActiveTexture(TextureUnit.Texture5);
+                //GL.Ext.FramebufferTexture2D(FramebufferTarget.FramebufferExt, FramebufferAttachment.ColorAttachment0Ext, TextureTarget.Texture2D, colorTexture2, 0);
+                GL.ActiveTexture(TextureUnit.Texture6);
+                GL.Ext.FramebufferTexture2D(FramebufferTarget.FramebufferExt, FramebufferAttachment.DepthAttachment, TextureTarget.Texture2D, depthTexture2, 0);
+                GL.ActiveTexture(TextureUnit.Texture5);
+
+                // Dither texture sample
+                GL.ActiveTexture(TextureUnit.Texture1);
 				GL.GenTextures(1, out ditherTexture);
 				GL.BindTexture(TextureTarget.Texture2D, ditherTexture);
 				GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
@@ -258,9 +298,24 @@ namespace GraphicsLibrary
 				byte[] imageData = new byte[] { 208, 112, 240, 80, 48, 176, 16, 144, 224, 64, 192, 96, 0, 128, 32, 160 };
 				GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.R8, 4, 4, 0, PixelFormat.Red, PixelType.UnsignedByte, imageData);
 
-				GL.ActiveTexture(TextureUnit.Texture0);
+				/*GL.ActiveTexture(TextureUnit.Texture5);
+                
+                GL.Ext.GenFramebuffers(1, out shadowBuffer);
+                GL.Ext.BindFramebuffer(FramebufferTarget.FramebufferExt, shadowBuffer);
+                
+                GL.GenTextures(1, out shadowTexture);
+                GL.BindTexture(TextureTarget.Texture2D, shadowTexture);
+                GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.DepthComponent16, 1024, shadowSize, 0, PixelFormat.DepthComponent, PixelType.Float, IntPtr.Zero);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
 
-				if(!CheckFboStatus())
+                GL.Ext.FramebufferTexture2D(FramebufferTarget.FramebufferExt, FramebufferAttachment.DepthAttachment, TextureTarget.Texture2D, shadowTexture, 0);
+                GL.DrawBuffer(DrawBufferMode.None);
+                GL.ReadBuffer(ReadBufferMode.None);*/
+
+                GL.ActiveTexture(TextureUnit.Texture0);
+
+                if (!CheckFboStatus())
 				{
 					Debug.WriteLine("WARNING: FBO initialization failure", Color4.Red);
 					Exit();
@@ -376,8 +431,11 @@ namespace GraphicsLibrary
 		}
 
 		protected override void OnUpdateFrame(FrameEventArgs e)
-		{
-			InputManager.enabled = !hudConsole.enabled;
+        {
+            //lightDir.X = (float)Math.Sin(worldTime / 10);
+            //lightDir.Z = (float)Math.Cos(worldTime / 10);
+
+            InputManager.enabled = !hudConsole.enabled;
 			InputManager.UpdateToggleStates();
 
 			enableRelativity = InputManager.IsKeyDown(Key.Q);
@@ -424,9 +482,12 @@ namespace GraphicsLibrary
 
 		protected override void OnRenderFrame(FrameEventArgs e)
 		{
-			#region Shader updates
+            Vector3 normalizedLightDir = lightDir.Normalized();
+            GL.Light(LightName.Light0, LightParameter.Position, new Vector4(normalizedLightDir.X, normalizedLightDir.Y, normalizedLightDir.Z, 0.0f) / 2f);
 
-			float renderTime = (float)e.Time; //TODO e.Time accuracy
+            #region Shader updates
+
+            float renderTime = (float)e.Time; //TODO e.Time accuracy
 
 			Shader.diffuseShaderCompiled.SetUniform("worldTime", worldTime);
 			Shader.unlitShaderCompiled.SetUniform("worldTime", worldTime);
@@ -504,11 +565,92 @@ namespace GraphicsLibrary
 			Shader.diffuseShaderCompiled.SetUniform("fogStart", fogStart);
 			Shader.diffuseShaderCompiled.SetUniform("fogEnd", fogEnd);
 			Shader.diffuseShaderCompiled.SetUniform("fogColor", fogColor);
+            Shader.diffuseShaderCompiled.SetUniform("enableTextures", enableTextures);
 
-			#endregion
-			#region 3D
-			#region First FBO pass
-			UpdateViewport();
+
+            #endregion
+            #region 3D
+            #region Shadow pass
+
+            Shader.shadowShaderCompiled.SetUniform("tex", 0);
+
+            GL.ActiveTexture(TextureUnit.Texture0);
+            GL.BindTexture(TextureTarget.Texture2D, TextureManager.GetTexture("terrain"));
+            GL.ActiveTexture(TextureUnit.Texture6);
+            GL.BindTexture(TextureTarget.Texture2D, depthTexture2);
+            GL.ActiveTexture(TextureUnit.Texture0);
+
+            Shader.diffuseShaderCompiled.SetUniform("shadowTex", 6);
+
+
+            //GL.ActiveTexture(TextureUnit.Texture5);
+            //GL.Viewport(ClientRectangle.X, ClientRectangle.Y, ClientSize.Width, ClientSize.Height);
+
+            //Matrix4 proj = Matrix4.CreateOrthographic(200f, 200f, -300f, 300f) * Matrix4.LookAt(new Vector3(0, 4, 1), Vector3.Zero, Vector3.UnitY);
+            Matrix4 maa = new Matrix4(
+                new Vector4(1f, 0f, 0f, 0f),
+                new Vector4(-normalizedLightDir.X / normalizedLightDir.Y, 1f, -normalizedLightDir.Z / normalizedLightDir.Y, 0f),
+                new Vector4(0f, 0f, 1f, 0f),
+                new Vector4(0f, 0f, 0f, 1f));
+            Matrix4 proj = Matrix4.CreateTranslation(-Camera.Instance.derivedPosition) * maa * Matrix4.LookAt(Vector3.UnitY, Vector3.Zero, Vector3.UnitZ) *  Matrix4.CreateOrthographic(shadowDistance, shadowDistance, -shadowHeight, shadowHeight);
+            Shader.diffuseShaderCompiled.SetUniform("shadowProj", proj);
+
+            GL.MatrixMode(MatrixMode.Projection);
+            GL.LoadMatrix(ref proj);
+
+            GL.MatrixMode(MatrixMode.Modelview);
+            GL.LoadIdentity();
+
+            GL.Ext.BindRenderbuffer(RenderbufferTarget.RenderbufferExt, depthRenderbuffer2);
+            GL.Ext.BindFramebuffer(FramebufferTarget.FramebufferExt, fboHandle2);
+            GL.DrawBuffer((DrawBufferMode)FramebufferAttachment.ColorAttachment0Ext);
+            //GL.PushAttrib(AttribMask.ViewportBit);
+
+            GL.Viewport(0, 0, shadowSize, shadowSize);
+
+            GL.DrawBuffer(DrawBufferMode.None);
+
+            GL.Clear(ClearBufferMask.DepthBufferBit);
+
+            /*for (int i = 0; i < amountOfRenderPasses; i++)
+            {
+                RootNode.Instance.StartRender(i);
+            }*/
+            if (drawShadows)
+            {
+                RootNode.Instance.StartRender(-1);
+            }
+
+            // GL.PopAttrib();
+            GL.Ext.BindFramebuffer(FramebufferTarget.FramebufferExt, 0); // return to visible framebuffer
+            GL.DrawBuffer(DrawBufferMode.Back);
+            GL.Ext.BindRenderbuffer(RenderbufferTarget.RenderbufferExt, 0);
+            GL.Ext.BindFramebuffer(FramebufferTarget.FramebufferExt, 0);
+
+            GL.Enable(EnableCap.FramebufferSrgb);
+
+
+            /*GL.ActiveTexture(TextureUnit.Texture5);
+            GL.CopyTexSubImage2D(TextureTarget.Texture2D, 0, 0, 0, 0, 0, shadowSize, shadowSize);
+
+            GL.ActiveTexture(TextureUnit.Texture0);*/
+
+            TextureManager.mTexCache["screen"] = (int)depthTexture2;
+            //Shader.unlitShaderCompiled.SetUniform("tex", 6);
+
+            GL.ActiveTexture(TextureUnit.Texture0);
+            GL.BindTexture(TextureTarget.Texture2D, TextureManager.GetTexture("terrain"));
+            GL.ActiveTexture(TextureUnit.Texture5);
+            GL.BindTexture(TextureTarget.Texture2D, colorTexture2);
+            GL.ActiveTexture(TextureUnit.Texture6);
+            GL.BindTexture(TextureTarget.Texture2D, depthTexture2);
+            GL.ActiveTexture(TextureUnit.Texture0);
+
+            #endregion
+
+            #region First FBO pass
+            //GL.Viewport(ClientRectangle.X, ClientRectangle.Y, ClientSize.Width, ClientSize.Height);
+            UpdateViewport();
 
 			GL.MatrixMode(MatrixMode.Modelview);
 			GL.LoadIdentity();
@@ -517,7 +659,7 @@ namespace GraphicsLibrary
 			GL.Ext.BindRenderbuffer(RenderbufferTarget.RenderbufferExt, depthRenderbuffer);
 			GL.Ext.BindFramebuffer(FramebufferTarget.FramebufferExt, fboHandle);
 			GL.DrawBuffer((DrawBufferMode)FramebufferAttachment.ColorAttachment0Ext);
-			GL.PushAttrib(AttribMask.ViewportBit);
+			//GL.PushAttrib(AttribMask.ViewportBit);
 			GL.Viewport(0, 0, Width, Height);
 
 			// Clear previous frame
@@ -543,15 +685,17 @@ namespace GraphicsLibrary
 			focalDistance = pixelData[0];
 
 			// Restore render settings
-			GL.PopAttrib();
+			//GL.PopAttrib();
 			GL.Ext.BindFramebuffer(FramebufferTarget.FramebufferExt, 0); // return to visible framebuffer
 			GL.DrawBuffer(DrawBufferMode.Back);
 			GL.Ext.BindRenderbuffer(RenderbufferTarget.RenderbufferExt, 0);
 			GL.Ext.BindFramebuffer(FramebufferTarget.FramebufferExt, 0);
 
-			#endregion
-			#region FBO render to back buffer & HUD
-			GL.Color4(Color4.White);
+            GL.Disable(EnableCap.FramebufferSrgb);
+
+            #endregion
+            #region FBO render to back buffer & HUD
+            GL.Color4(Color4.White);
 
 			// 2D rendering settings
 			GL.DepthMask(false);
@@ -604,8 +748,10 @@ namespace GraphicsLibrary
 					Shader.fboShaderCompiled.Enable();
 					Shader.fboShaderCompiled.SetUniform("tex", 0);
 					Shader.fboShaderCompiled.SetUniform("depthTex", 1);
-				}
-			}
+                    Shader.fboShaderCompiled.SetUniform("dim", new Vector2(Width, Height));
+                    Shader.fboShaderCompiled.SetUniform("enableAO", enableAmbientOcclusion);
+                }
+            }
 
 			// Render FBO quad
 			GL.ActiveTexture(TextureUnit.Texture0);

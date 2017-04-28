@@ -192,7 +192,36 @@ namespace GraphicsLibrary.Core
 			}
 		}
 
-		public static Shader particleShader
+        public static Shader shadowShader
+        {
+            get
+            {
+                return new Shader
+                {
+                    vertexShader = File.ReadAllText(@"Content/shaders/shadow.vsh"),
+                    fragmentShader = File.ReadAllText(@"Content/shaders/shadow.fsh")
+                };
+            }
+        }
+
+        private static Shader shadowShaderCompiledi;
+        public static Shader shadowShaderCompiled
+        {
+            get
+            {
+                if (shadowShaderCompiledi == null)
+                {
+                    shadowShaderCompiledi = shadowShader;
+                }
+                if (shadowShaderCompiledi.Compiled == false)
+                {
+                    shadowShaderCompiledi.GenerateShaders();
+                }
+                return shadowShaderCompiledi;
+            }
+        }
+
+        public static Shader particleShader
 		{
 			get
 			{

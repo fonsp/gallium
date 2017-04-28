@@ -277,8 +277,16 @@ namespace Gallium.Program
 
 			
 			Vector3 raydir = Node.directionFront;
-			
-			if(!InputManager.IsButtonDown(MouseButton.Right))
+
+            if (InputManager.IsKeyDown(Key.L))
+            {
+                RenderWindow.Instance.lightDir = raydir;
+            }
+            RenderWindow.Instance.drawShadows = !InputManager.IsKeyToggled(Key.K);
+            RenderWindow.Instance.enableAmbientOcclusion = !InputManager.IsKeyToggled(Key.J);
+            RenderWindow.Instance.enableTextures = !InputManager.IsKeyToggled(Key.T);
+
+            if (!InputManager.IsButtonDown(MouseButton.Right))
 			{
 				if(mouseDown)
 				{

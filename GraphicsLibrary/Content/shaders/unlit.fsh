@@ -11,6 +11,7 @@ uniform vec3 cpos;
 uniform mat4 crot;
 varying float dopp;
 uniform sampler2D tex;
+uniform sampler2D shadowTex;
 
 void main()
 {

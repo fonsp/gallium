@@ -26,11 +26,16 @@ namespace Gallium.Program
 
 			skybox.mesh.material.textureName = "skybox";
 			skybox.isLit = false;
+            skybox.drawShadows = false;
 			//skybox.mesh.material.baseColor = new Color4(.4f, .4f, .4f, 1.0f);
 			
 			testHueScale.mesh.material.textureName = "huescale";
 			testHueScale.position = new Vector3(100, 0, 100);
-			
+
+            screen.mesh.material.textureName = "screen";
+            screen.position.Y = 128;
+            screen.isLit = false;
+            screen.drawShadows = false;
 
 			hudDebug = new HudDebug("hudDebug");
 			crosshair.width = 32f;
@@ -43,7 +48,7 @@ namespace Gallium.Program
 			RootNode.Instance.Add(worldNode);
 			RootNode.Instance.Add(monster);
 			RootNode.Instance.Add(skybox);
-
+            RootNode.Instance.Add(screen);
 			#endregion
 
 			Camera.Instance.position = new Vector3(0, 80, 0);
