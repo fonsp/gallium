@@ -468,29 +468,43 @@ namespace GraphicsLibrary.Core
 			{
 				if(occlude)
 				{
-                    Hud.HudDebug.occlusionStatTotal++;
-					if(!directionsComputed)
-					{
-						Camera.Instance.GetDirections(out directionUp, out directionRight, out directionFront);
-						float tan = (float)Math.Tan(Camera.Instance.Fov * 3.14159f / 360f);
-						occlusionTop = Vector3.Normalize(directionFront + tan * directionUp); // TODOO: Normalize necessary?
-						occlusionRight = Vector3.Normalize(directionFront + tan * directionRight * Camera.Instance.width / Camera.Instance.height); // TODOO: Normalize necessary?
-						occlusionBottom = Vector3.Normalize(directionFront - tan * directionUp); // TODOO: Normalize necessary?
-						occlusionLeft = Vector3.Normalize(directionFront - tan * directionRight * Camera.Instance.width / Camera.Instance.height); // TODOO: Normalize necessary?
+                    if (pass == -1)
+                    {
+                        if (Math.Abs(Camera.Instance.derivedPosition.X - derivedPosition.X) > RenderWindow.Instance.shadowWidth / 2f)
+                        {
+                            return;
+                        }
+                        if (Math.Abs(Camera.Instance.derivedPosition.Z - derivedPosition.Z) > RenderWindow.Instance.shadowWidth / 2f)
+                        {
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        Hud.HudDebug.occlusionStatTotal++;
+                        if (!directionsComputed)
+                        {
+                            Camera.Instance.GetDirections(out directionUp, out directionRight, out directionFront);
+                            float tan = (float)Math.Tan(Camera.Instance.Fov * 3.14159f / 360f);
+                            occlusionTop = Vector3.Normalize(directionFront + tan * directionUp); // TODOO: Normalize necessary?
+                            occlusionRight = Vector3.Normalize(directionFront + tan * directionRight * Camera.Instance.width / Camera.Instance.height); // TODOO: Normalize necessary?
+                            occlusionBottom = Vector3.Normalize(directionFront - tan * directionUp); // TODOO: Normalize necessary?
+                            occlusionLeft = Vector3.Normalize(directionFront - tan * directionRight * Camera.Instance.width / Camera.Instance.height); // TODOO: Normalize necessary?
 
-						occlusionTAlt = Vector3.Cross(occlusionTop, directionRight);
-						occlusionBAlt = Vector3.Cross(directionRight, occlusionBottom);
-						occlusionLAlt = Vector3.Cross(occlusionLeft, directionUp);
-						occlusionRAlt = Vector3.Cross(directionUp, occlusionRight);
+                            occlusionTAlt = Vector3.Cross(occlusionTop, directionRight);
+                            occlusionBAlt = Vector3.Cross(directionRight, occlusionBottom);
+                            occlusionLAlt = Vector3.Cross(occlusionLeft, directionUp);
+                            occlusionRAlt = Vector3.Cross(directionUp, occlusionRight);
 
-						directionsComputed = true;
-					}
-					if(IsOccluded())
-					{
-                        //Console.WriteLine(name + "occluded!");
-                        Hud.HudDebug.occlusionStatOccluded++;
-						return;
-					}
+                            directionsComputed = true;
+                        }
+                        if (IsOccluded())
+                        {
+                            //Console.WriteLine(name + "occluded!");
+                            Hud.HudDebug.occlusionStatOccluded++;
+                            return;
+                        }
+                    }
 				}
 
 				/*if(!ignoreDrawDistance && (Camera.Instance.position - derivedPosition).Length > RenderWindow.Instance.drawDistance)

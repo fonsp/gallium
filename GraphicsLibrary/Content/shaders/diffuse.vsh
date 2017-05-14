@@ -69,7 +69,7 @@ void main()
 	
 
 
-	gl_FrontColor = vec4(gl_Color.xyz, 1.0 / (gl_Position.w / 2000.0 + 0.9));
+	gl_FrontColor = gl_Color;
 	gl_TexCoord[0] = gl_MultiTexCoord0;
 
 	shadowCoord = (shadowProj * (gl_ModelViewMatrix * gl_Vertex)).xyz;

@@ -52,7 +52,7 @@ void main()
 		texcolor = vec4(1.0);
 	}
 	fragout *= texcolor;																									// texture
-	fragout *= vec4(gl_Color.xyz, 1.0);																					// color
+	
 	
 	vec4 diffuse = vec4(vec3(pow(intensity,1)), 1.0) * gl_LightSource[0].diffuse * texcolor;
 	if(intensity > 0){
@@ -73,6 +73,8 @@ void main()
 			if(realDepth - shadowDepth < .0008 / min(scale(shadowCoord.x), scale(shadowCoord.y))){
 				fragout.xyz += diffuse.xyz;
 			}
+		} else {
+			fragout.xyz += diffuse.xyz;
 		}
 	}
 	/*if((effects / 2) % 2 == 1)
@@ -99,15 +101,21 @@ void main()
 	fragout.g += a;
 
 	//fragout += vec4(vec3(a), 0.0);
+	
+	
+	fragout.xyz *= gl_Color.xyz;
+	fragout.a = gl_Color.a;
 
 	//float dist = gl_FragCoord.z / gl_FragCoord.w;
 	float dist = length(pos_rel_to_cam);
-	gl_FragColor = mix(fragout, fogColor, max(0.0, min(1.0, (dist - fogStart) / (fogEnd - fogStart))));
+	gl_FragColor.xyz = mix(fragout.xyz, fogColor.xyz, max(0.0, min(1.0, (dist - fogStart) / (fogEnd - fogStart))));
+	gl_FragColor.a = fragout.a;
 	//gl_FragColor.rgb = pos_rel_to_cam.xyz / 10.0;
 	//gl_FragColor = vec4(vec3(), 1.0);
 	//gl_FragColor = mix(fragout, texture2D(shadowTex, gl_TexCoord[0].xy) - vec4(.5), .5);// + vec4(.5);
 	//gl_FragColor = vec4(vec3(atan(texture2D(shadowTex, gl_TexCoord[0].xy).r)),1);
 	//gl_FragColor = texture2D(shadowTex, gl_TexCoord[0].xy);
 	//gl_FragColor = fragout;
+	
 	
 }

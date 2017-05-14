@@ -34,6 +34,7 @@ namespace Gallium.Program
 
             screen.mesh.material.textureName = "screen";
             screen.position.Y = 128;
+            screen.position.X = -64;
             screen.isLit = false;
             screen.drawShadows = false;
 

@@ -14,8 +14,9 @@ namespace GraphicsLibrary.Voxel
 	public class WorldNode:Node
 	{
 		public World world;
-		public int hardRadius = 1;
-		public int softRadius = 2;
+        public int hardRadius = 3;
+		public int softRadius = 10;
+        public int unloadBorder = 2;
 		public float viewRadius = 48f;
 
 		Dictionary<IntVector, Entity> generatedEntities = new Dictionary<IntVector, Entity>();
@@ -23,6 +24,8 @@ namespace GraphicsLibrary.Voxel
 		Dictionary<IntVector, ConstructionThreadParameters> constructionThreadParameters = new Dictionary<IntVector, ConstructionThreadParameters>();
 		List<IntVector> needUpdate = new List<IntVector>();
 		List<Thread> threadsToStart = new List<Thread>();
+
+        private Thread chunkSavingThread;
 
 		public WorldNode(string name) : base(name)
 		{
@@ -69,6 +72,7 @@ namespace GraphicsLibrary.Voxel
 							//Console.WriteLine("ConstrThr created at {0} on {1}", dd, time);
 							ConstructionThreadParameters para = new ConstructionThreadParameters(dd);
 							Thread t = new Thread(() => ASyncChunkGenerate(para));
+                            t.Name = "CT" + dd;
 							constructionThreadParameters.Add(dd, para);
 							constructionThreads.Add(dd, t);
 
@@ -166,8 +170,14 @@ namespace GraphicsLibrary.Voxel
 							donesomethingtimer += completionDelay;
 							
 							para.entity.mesh.GenerateVBO();
-							
+
+                            if (hardLimitsToComplete.Contains(dd))
+                            {
+                                para.entity.materialAge = para.entity.materialLifetime;
+                            }
+
 							Add(para.entity);
+                            
 							world.AddChunk(para.chunk);
 							generatedEntities.Add(dd, para.entity);
 							toRemove.Add(dd);
@@ -200,14 +210,20 @@ namespace GraphicsLibrary.Voxel
 
 
 
-
-			foreach(KeyValuePair<string, Node> pair in children)
+            List<IntVector> toUnload = new List<IntVector>();
+			foreach(KeyValuePair<IntVector, Entity> pair in generatedEntities)
 			{
-				Node child = pair.Value;
-				float chunkDistSquared = (camx - child.derivedPosition.X) * (camx - child.derivedPosition.X) + (camz - child.derivedPosition.Z) * (camz - child.derivedPosition.Z);
+				if(Math.Abs(pair.Key.x - d.x) >= softRadius + unloadBorder || Math.Abs(pair.Key.y - d.y) >= softRadius + unloadBorder)
+                {
+                    toUnload.Add(pair.Key);
+                }
+				
+                //float chunkDistSquared = (camx - child.derivedPosition.X) * (camx - child.derivedPosition.X) + (camz - child.derivedPosition.Z) * (camz - child.derivedPosition.Z);
 				//child.isVisible = (chunkDistSquared < radiusSquared);
 				
 			}
+
+            toUnload.ForEach(x => UnloadChunk(x));
 
             Hud.HudDebug.threadNum = constructionThreads.Count();
 		}
@@ -237,8 +253,11 @@ namespace GraphicsLibrary.Voxel
 
 		private static void ASyncChunkGenerate(ConstructionThreadParameters para)
 		{
-			//Console.WriteLine("Thread STARTED at {0}", para.d);
-			para.chunk = World.GenerateTempChunkAt(para.d);
+            //Console.WriteLine("Thread STARTED at {0}", para.d);
+
+            //TODO: CHECK IF CHUNK IS NOT IN TOSAVE LIST
+
+            para.chunk = World.GenerateTempChunkAt(para.d);
 			para.entity = new Entity("C." + para.d.x + "." + para.d.y);
 			para.entity.position = new Vector3(16 * para.d.x, 0, 16 * para.d.y);
 			para.entity.ignoreDrawDistance = false;
@@ -248,8 +267,12 @@ namespace GraphicsLibrary.Voxel
 			para.entity.mesh = para.chunk.GenerateMesh();
 			para.entity.mesh.useVBO = true;
 			para.entity.mesh.material.textureName = "terrain";
-			//cent.mesh.GenerateVBO(); ////FIXIXXXXX
-			para.done = true;
+            para.entity.mesh.material.AddTransitionColor(new OpenTK.Graphics.Color4(1f, 1f, 1f, 0f), 0f);
+            para.entity.materialLifetime = .2f;
+            //para.entity.mesh.material.AddTransitionColor(new OpenTK.Graphics.Color4(1f, 1f, 1f, 1f), 1f);
+            para.entity.mesh.material.enableColorTransitions = true;
+            //cent.mesh.GenerateVBO(); ////FIXIXXXXX
+            para.done = true;
 			//Console.WriteLine("Thread COMPLETED at {0}", para.d);
 		}
 
@@ -331,9 +354,12 @@ namespace GraphicsLibrary.Voxel
 			generatedEntities.Remove(d);
 
 			Chunk chunk = world.GetChunk(d);
-			ChunkLoader.SaveChunk(chunk);
-			world.RemoveChunk(d);
-			chunk = null;
+			//ChunkLoader.SaveChunk(chunk);
+			ChunkLoader.SaveChunkASync(chunk);
+			Console.WriteLine("Chunk save requested " + d);
+
+			// TODO: Nullify?
+			//chunk = null;
 
 
 

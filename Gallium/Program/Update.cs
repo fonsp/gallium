@@ -280,7 +280,7 @@ namespace Gallium.Program
 
             if (InputManager.IsKeyDown(Key.L))
             {
-                RenderWindow.Instance.lightDir = raydir;
+                RenderWindow.Instance.lightDir = -raydir;
             }
             RenderWindow.Instance.drawShadows = !InputManager.IsKeyToggled(Key.K);
             RenderWindow.Instance.enableAmbientOcclusion = !InputManager.IsKeyToggled(Key.J);

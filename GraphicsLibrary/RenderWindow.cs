@@ -34,7 +34,7 @@ namespace GraphicsLibrary
 		/// Exit the application when the 'Esc' key is pressed.
 		/// </summary>
 		public bool escapeOnEscape = true;
-		private readonly GameTimer updateSw = new GameTimer();
+        private readonly GameTimer updateSw = new GameTimer();
 		public HudConsole hudConsole = new HudConsole("mainHudConsole", 8);
 		/// <summary>
 		/// World time
@@ -99,8 +99,8 @@ namespace GraphicsLibrary
 		public uint[] elementBase = new uint[1000000];
         public uint fboHandle, colorTexture, depthTexture, depthRenderbuffer, ditherTexture, shadowTexture, shadowBuffer;
         public uint fboHandle2, colorTexture2, depthTexture2, depthRenderbuffer2, ditherTexture2, shadowTexture2, shadowBuffer2;
-        public int shadowSize = 2048;
-        public float shadowDistance = 300f, shadowHeight = 100f;
+        public int shadowTextureSize = 2048;
+        public float shadowWidth = 300f, shadowHeight = 100f;
         public bool drawShadows = true, enableAmbientOcclusion = true, enableTextures = true;
         public Color4 lightColor = Color4.FromHsv(new Vector4(48f/360f, .47f, 1f, 1f)), darkColor  = Color4.FromHsv(new Vector4(192f/360f, .47f, 1f, 1f));
         public float lightStrength = 1.9f, darkStrength = .2f;
@@ -134,7 +134,7 @@ namespace GraphicsLibrary
 			WindowBorder = WindowBorder.Resizable;
 			try
 			{
-				GL.ClearColor(Color.Black);
+				GL.ClearColor(Color.White);
 				GL.ShadeModel(ShadingModel.Smooth);
 				GL.Hint(HintTarget.PerspectiveCorrectionHint, HintMode.Nicest);
 				//GL.Enable(EnableCap.ColorMaterial);
@@ -261,7 +261,7 @@ namespace GraphicsLibrary
                 GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Clamp);
                 GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Clamp);
                 GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureCompareMode, (int)TextureCompareMode.None);
-                GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.DepthComponent16, shadowSize, shadowSize, 0, PixelFormat.DepthComponent, PixelType.Float, IntPtr.Zero);
+                GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.DepthComponent16, shadowTextureSize, shadowTextureSize, 0, PixelFormat.DepthComponent, PixelType.Float, IntPtr.Zero);
                 //GL.BindTexture(TextureTarget.Texture2D, 0);
 
                 GL.ActiveTexture(TextureUnit.Texture0);
@@ -381,6 +381,7 @@ namespace GraphicsLibrary
 
 		protected override void OnUnload(EventArgs e)
 		{
+            initialized = false;
 			Debug.WriteLine("Unloading textures..");
 
 			try
@@ -592,7 +593,7 @@ namespace GraphicsLibrary
                 new Vector4(-normalizedLightDir.X / normalizedLightDir.Y, 1f, -normalizedLightDir.Z / normalizedLightDir.Y, 0f),
                 new Vector4(0f, 0f, 1f, 0f),
                 new Vector4(0f, 0f, 0f, 1f));
-            Matrix4 proj = Matrix4.CreateTranslation(-Camera.Instance.derivedPosition) * maa * Matrix4.LookAt(Vector3.UnitY, Vector3.Zero, Vector3.UnitZ) *  Matrix4.CreateOrthographic(shadowDistance, shadowDistance, -shadowHeight, shadowHeight);
+            Matrix4 proj = Matrix4.CreateTranslation(-Camera.Instance.derivedPosition) * maa * Matrix4.LookAt(Vector3.UnitY, Vector3.Zero, Vector3.UnitZ) *  Matrix4.CreateOrthographic(shadowWidth, shadowWidth, -shadowHeight, shadowHeight);
             Shader.diffuseShaderCompiled.SetUniform("shadowProj", proj);
 
             GL.MatrixMode(MatrixMode.Projection);
@@ -606,7 +607,7 @@ namespace GraphicsLibrary
             GL.DrawBuffer((DrawBufferMode)FramebufferAttachment.ColorAttachment0Ext);
             //GL.PushAttrib(AttribMask.ViewportBit);
 
-            GL.Viewport(0, 0, shadowSize, shadowSize);
+            GL.Viewport(0, 0, shadowTextureSize, shadowTextureSize);
 
             GL.DrawBuffer(DrawBufferMode.None);
 

@@ -83,11 +83,15 @@ void main()
 
 		float depth = toReal(texture2D(depthTex, gl_TexCoord[0].xy).x);
 
+		//float sampleSin = sin(gl_TexCoord[0].x * 10);
+		//float sampleCos = cos(gl_TexCoord[0].x * 10);
+		//mat2 sampleRotation = mat2(sampleCos, sampleSin, sampleSin, sampleCos);
+
 		float average = 0.0;
 		int count = 0;
 		for(int i = 0; i < N; i++){
-			float d = toReal(texture2D(depthTex, gl_TexCoord[0].xy + poissonDisk[i] * 200.0 / dim / depth).x);
-			if((depth - d) < 1){
+			float d = toReal(texture2D(depthTex, gl_TexCoord[0].xy + poissonDisk[i] * /*sampleRotation */ 200.0 / dim / depth).x);
+			if((depth - d) < 1.4){
 				average += d;
 				count++;
 			}

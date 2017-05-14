@@ -25,13 +25,23 @@ namespace GraphicsLibrary.Voxel
 
 		public static bool ChunkIsSaved(IntVector d)
 		{
-            return false;
+            //return false;
 			return File.Exists("world/c" + d.x + "c" + d.y + ".dat");
 		}
 
 		public static void SaveChunk(Chunk chunk)
 		{
 			File.WriteAllBytes("world/c" + chunk.xx + "c" + chunk.yy + ".dat", chunk.cdata);
+		}
+
+		public static async Task SaveChunkASync(Chunk chunk)
+		{
+			using (FileStream fs = new FileStream("world/c" + chunk.xx + "c" + chunk.yy + ".dat", FileMode.Create))
+			{
+				fs.Seek(0, SeekOrigin.End);
+				await fs.WriteAsync(chunk.cdata, 0, chunk.cdata.Length);
+			}
+			Console.WriteLine("Chunk save completed " + new IntVector(chunk.xx,chunk.yy));
 		}
 	}
 }

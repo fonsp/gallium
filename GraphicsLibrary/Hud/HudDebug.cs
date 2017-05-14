@@ -3,9 +3,11 @@ using System.Diagnostics;
 using System.Management;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Linq;
 using GraphicsLibrary.Core;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
+using OpenTK;
 
 namespace GraphicsLibrary.Hud
 {
@@ -17,6 +19,15 @@ namespace GraphicsLibrary.Hud
 		public HudGraph xGraph = new HudGraph("xGraph");
 		public HudGraph yGraph = new HudGraph("yGraph");
 		public HudGraph zGraph = new HudGraph("zGraph");
+
+        private HudElement cpuGraphContainer = new HudElement("cpuGraphContainer");
+        private List<HudGraph> cpuGraphs = new List<HudGraph>();
+
+        private List<PerformanceCounter> cpuCounters = new List<PerformanceCounter>();
+        private int cores = 0;
+        private int processors = 0;
+
+        public readonly int memory;
 
 		public HudDebug(string name)
 			: base(name)
@@ -39,10 +50,6 @@ namespace GraphicsLibrary.Hud
 			NewField("window", 8, AlignMode.Left, "Window: ", "");
 			NewField("vsync", 9, AlignMode.Left, "VSync: ", "");
 
-            NewField("tw", 0, AlignMode.Right, "World time: ", " s");
-            NewField("occludecount", 2, AlignMode.Right, "Occluded: ", "");
-            NewField("threadnum", 3, AlignMode.Right, "Working threads: ", "");
-
             fpsGraph.position.Y = 11 * 14;
 			Add(fpsGraph);
 			xGraph.position.Y = 12 * 14 + 128;
@@ -56,6 +63,39 @@ namespace GraphicsLibrary.Hud
 			zGraph.backgroundColor = Color4.Transparent;
 			zGraph.color = Color4.Blue;
 			Add(zGraph);
+
+            NewField("tw", 0, AlignMode.Right, "World time: ", " s");
+            NewField("occludecount", 2, AlignMode.Right, "Occluded: ", "");
+            NewField("threadnum", 3, AlignMode.Right, "Working threads: ", "");
+
+            cpuGraphContainer.position.Y = 5 * 14;
+            Add(cpuGraphContainer);
+
+            foreach (var item in new System.Management.ManagementObjectSearcher("Select * from Win32_Processor").Get())
+            {
+                cores += int.Parse(item["NumberOfCores"].ToString());
+            }
+            processors = Environment.ProcessorCount;
+            /*foreach (var item in new System.Management.ManagementObjectSearcher("Select * from Win32_LogicalMemoryConfiguration").Get())
+            {
+                memory += int.Parse(item["TotalPageFileSpace"].ToString());
+            }*/
+
+            for(int i = 0; i < processors; i++)
+            {
+                cpuCounters.Add(new PerformanceCounter("Processor", "% Processor Time", i.ToString()));
+                HudGraph graph = new HudGraph("CPUgraph" + i);
+                graph.height = 64;
+                graph.position.Y = 80 * i;
+                cpuGraphs.Add(graph);
+                cpuGraphContainer.Add(graph);
+            }
+
+
+
+            Console.WriteLine(cores + " cores");
+            Console.WriteLine(processors+ " processors");
+            Console.WriteLine(memory);
 		}
 
 		/// <summary>
@@ -103,10 +143,12 @@ namespace GraphicsLibrary.Hud
 		private float fTime = 0f;
 
         public static int occlusionStatOccluded, occlusionStatTotal, threadNum;
+        private PerformanceCounter pCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total");
 
 		public override void Update(float timeSinceLastUpdate)
 		{
 			base.Update(timeSinceLastUpdate);
+            cpuGraphContainer.position.X = RenderWindow.Instance.Width - 256;
 
 			fCount++;
 			if(fTime >= 0.5f)
@@ -115,7 +157,14 @@ namespace GraphicsLibrary.Hud
 				fps = fCount * 2;
 				fpsGraph.value = (byte)((fps * 256) / 120);
 				fCount = 0;
-			}
+
+                for (int i = 0; i < processors; i++)
+                {
+                    cpuGraphs[i].value = (byte)(cpuCounters[i].NextValue() * 256 / 100);
+                }
+
+                //Console.WriteLine((from pc in cpuCounters select pc.NextValue()).Average());
+            }
 			fTime += timeSinceLastUpdate;
 
 			fpsGraph.value = (timeSinceLastUpdate == 0) ? (byte)255 : (byte)Math.Min(255, (1/timeSinceLastUpdate) * 256 / 120);
@@ -139,6 +188,8 @@ namespace GraphicsLibrary.Hud
 			xGraph.value = (byte)((256 * Camera.Instance.position.X) / 16);
 			yGraph.value = (byte)((256 * Camera.Instance.position.Y) / 16);
 			zGraph.value = (byte)((256 * Camera.Instance.position.Z) / 16);
+
+            
 		}
 	}
 }
