@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
+using OpenTK.Graphics;
 
 namespace GraphicsLibrary.Core
 {
@@ -191,7 +192,36 @@ namespace GraphicsLibrary.Core
 			}
 		}
 
-		public static Shader particleShader
+        public static Shader shadowShader
+        {
+            get
+            {
+                return new Shader
+                {
+                    vertexShader = File.ReadAllText(@"Content/shaders/shadow.vsh"),
+                    fragmentShader = File.ReadAllText(@"Content/shaders/shadow.fsh")
+                };
+            }
+        }
+
+        private static Shader shadowShaderCompiledi;
+        public static Shader shadowShaderCompiled
+        {
+            get
+            {
+                if (shadowShaderCompiledi == null)
+                {
+                    shadowShaderCompiledi = shadowShader;
+                }
+                if (shadowShaderCompiledi.Compiled == false)
+                {
+                    shadowShaderCompiledi.GenerateShaders();
+                }
+                return shadowShaderCompiledi;
+            }
+        }
+
+        public static Shader particleShader
 		{
 			get
 			{
@@ -631,6 +661,26 @@ namespace GraphicsLibrary.Core
 		/// <param name="name">Uniform name</param>
 		/// <param name="value">New value</param>
 		public void SetUniform(string name, Vector4 value)
+		{
+			if(!compiled)
+			{
+				return;
+			}
+			GL.UseProgram(sp);
+			if(!uniforms.ContainsKey(name))
+			{
+				uniforms.Add(name, GL.GetUniformLocation(sp, name));
+			}
+			GL.Uniform4(uniforms[name], value);
+		}
+
+
+		/// <summary>
+		/// Sets a uniform in the specified shader.
+		/// </summary>
+		/// <param name="name">Uniform name</param>
+		/// <param name="value">New value</param>
+		public void SetUniform(string name, Color4 value)
 		{
 			if(!compiled)
 			{

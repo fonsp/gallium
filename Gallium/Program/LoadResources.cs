@@ -1,8 +1,8 @@
 ﻿using System.IO;
-using Gallium.Blocks;
 using GraphicsLibrary.Content;
 using GraphicsLibrary.Core;
 using GraphicsLibrary.Hud;
+using GraphicsLibrary.Voxel;
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
 
@@ -13,6 +13,8 @@ namespace Gallium.Program
 		private Entity skybox = new Entity("skybox");
 		private Entity monster = new Entity("monster");
 		private Entity testHueScale = new Entity("testHueScale");
+        private Entity screen = new Entity("screen");
+		private WorldNode worldNode = new WorldNode("world");
 		private HudDebug hudDebug;
 		private HudImage crosshair = new HudImage("crosshair", "crosshair0");
 
@@ -21,7 +23,7 @@ namespace Gallium.Program
 			config = new Config("Game.ini");
 
 			TextureManager.AddTexture("monsterTexture", @"Content/textures/monsterText1.png");
-			TextureManager.AddTexture("skybox", @"Content/textures/skybox.png");
+			TextureManager.AddTexture("skybox", @"Content/textures/skyboxblue.png");
 			TextureManager.AddTexture("font0", @"Content/textures/font0.png");
 			TextureManager.AddTexture("font1", @"Content/textures/font1.png");
 			TextureManager.AddTexture("font2", @"Content/textures/font2.png");
@@ -36,13 +38,13 @@ namespace Gallium.Program
 			TextureManager.AddTexture("playerTexture", @"Content/textures/player.png");
 			TextureManager.AddTexture("testimage", @"Content/textures/testimage.png");
 			TextureManager.AddTexture("star", @"Content/textures/star.png");
-			
+            TextureManager.AddTexture("screen", @"Content/textures/testimage.png");
 
 			testHueScale.mesh = ObjConverter.ConvertObjToMesh(File.ReadAllText(@"Content/models/monsterUVd.obj"), new Vector3(101, -19, 205));
 			monster.mesh = ObjConverter.ConvertObjToMesh(File.ReadAllText(@"Content/models/monsterUVd.obj"), new Vector3(101, -19, 205));
+			monster.scale = new Vector3(.1f, .1f, .1f);
 			skybox.mesh = ObjConverter.ConvertObjToMesh(File.ReadAllText(@"Content/models/skybox3.obj"));
-			Block.blockMesh = ObjConverter.ConvertObjToVboMesh(File.ReadAllText(@"Content/models/blocks/blocka.obj"), new Vector3(25f, 25f, 25f));
-			SupportBlock.blockMesh = ObjConverter.ConvertObjToVboMesh(File.ReadAllText(@"Content/models/blocks/blockb.obj"), new Vector3(25f, 25f, 25f));
+            screen.mesh = ObjConverter.ConvertObjToMesh(File.ReadAllText(@"Content/models/slide.obj"));
 
 			//mapCollision.AddRange(ObjConverter.ConvertObjToAABBarray(File.ReadAllText(@"Content/models/map1/collision.obj")));
 		}

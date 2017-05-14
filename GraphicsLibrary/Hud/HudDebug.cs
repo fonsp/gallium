@@ -3,9 +3,11 @@ using System.Diagnostics;
 using System.Management;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Linq;
 using GraphicsLibrary.Core;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
+using OpenTK;
 
 namespace GraphicsLibrary.Hud
 {
@@ -17,6 +19,15 @@ namespace GraphicsLibrary.Hud
 		public HudGraph xGraph = new HudGraph("xGraph");
 		public HudGraph yGraph = new HudGraph("yGraph");
 		public HudGraph zGraph = new HudGraph("zGraph");
+
+        private HudElement cpuGraphContainer = new HudElement("cpuGraphContainer");
+        private List<HudGraph> cpuGraphs = new List<HudGraph>();
+
+        private List<PerformanceCounter> cpuCounters = new List<PerformanceCounter>();
+        private int cores = 0;
+        private int processors = 0;
+
+        public readonly int memory;
 
 		public HudDebug(string name)
 			: base(name)
@@ -39,22 +50,7 @@ namespace GraphicsLibrary.Hud
 			NewField("window", 8, AlignMode.Left, "Window: ", "");
 			NewField("vsync", 9, AlignMode.Left, "VSync: ", "");
 
-			NewField("tl", 0, AlignMode.Right, "Local time: ", " s");
-			NewField("tw", 1, AlignMode.Right, "World time: ", " s");
-			NewField("td", 2, AlignMode.Right, "Ahead by: ", " s");
-
-			NewField("lf", 4, AlignMode.Right, "Lorentz factor: ", "");
-			NewField("warp", 5, AlignMode.Right, "Warp factor: ", "");
-			NewField("v", 6, AlignMode.Right, "v: ", " /s");
-			NewField("vc", 7, AlignMode.Right, "v/c: ", "");
-			NewField("c", 8, AlignMode.Right, "c: ", " /s");
-			NewField("timeMult", 9, AlignMode.Right, "timeMult: ", "");
-
-			NewField("enAb", 11, AlignMode.Right, "Relativistic aberration: ", "");
-			NewField("enBr", 12, AlignMode.Right, "Relativistic brightness: ", "");
-			NewField("enDo", 13, AlignMode.Right, "Doppler effect: ", "");
-
-			fpsGraph.position.Y = 11 * 14;
+            fpsGraph.position.Y = 11 * 14;
 			Add(fpsGraph);
 			xGraph.position.Y = 12 * 14 + 128;
 			xGraph.color = Color4.Red;
@@ -67,6 +63,39 @@ namespace GraphicsLibrary.Hud
 			zGraph.backgroundColor = Color4.Transparent;
 			zGraph.color = Color4.Blue;
 			Add(zGraph);
+
+            NewField("tw", 0, AlignMode.Right, "World time: ", " s");
+            NewField("occludecount", 2, AlignMode.Right, "Occluded: ", "");
+            NewField("threadnum", 3, AlignMode.Right, "Working threads: ", "");
+
+            cpuGraphContainer.position.Y = 5 * 14;
+            Add(cpuGraphContainer);
+
+            foreach (var item in new System.Management.ManagementObjectSearcher("Select * from Win32_Processor").Get())
+            {
+                cores += int.Parse(item["NumberOfCores"].ToString());
+            }
+            processors = Environment.ProcessorCount;
+            /*foreach (var item in new System.Management.ManagementObjectSearcher("Select * from Win32_LogicalMemoryConfiguration").Get())
+            {
+                memory += int.Parse(item["TotalPageFileSpace"].ToString());
+            }*/
+
+            for(int i = 0; i < processors; i++)
+            {
+                cpuCounters.Add(new PerformanceCounter("Processor", "% Processor Time", i.ToString()));
+                HudGraph graph = new HudGraph("CPUgraph" + i);
+                graph.height = 64;
+                graph.position.Y = 80 * i;
+                cpuGraphs.Add(graph);
+                cpuGraphContainer.Add(graph);
+            }
+
+
+
+            Console.WriteLine(cores + " cores");
+            Console.WriteLine(processors+ " processors");
+            Console.WriteLine(memory);
 		}
 
 		/// <summary>
@@ -113,19 +142,32 @@ namespace GraphicsLibrary.Hud
 		private int fCount = 0;
 		private float fTime = 0f;
 
+        public static int occlusionStatOccluded, occlusionStatTotal, threadNum;
+        private PerformanceCounter pCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total");
+
 		public override void Update(float timeSinceLastUpdate)
 		{
 			base.Update(timeSinceLastUpdate);
+            cpuGraphContainer.position.X = RenderWindow.Instance.Width - 256;
 
 			fCount++;
 			if(fTime >= 0.5f)
 			{
 				fTime -= 0.5f;
 				fps = fCount * 2;
-				fpsGraph.value = (byte)((fps * 256) / 1000);
+				fpsGraph.value = (byte)((fps * 256) / 120);
 				fCount = 0;
-			}
+
+                for (int i = 0; i < processors; i++)
+                {
+                    cpuGraphs[i].value = (byte)(cpuCounters[i].NextValue() * 256 / 100);
+                }
+
+                //Console.WriteLine((from pc in cpuCounters select pc.NextValue()).Average());
+            }
 			fTime += timeSinceLastUpdate;
+
+			fpsGraph.value = (timeSinceLastUpdate == 0) ? (byte)255 : (byte)Math.Min(255, (1/timeSinceLastUpdate) * 256 / 120);
 
 			fields["fps"].value = fps.ToString("D");
 			fields["position"].value = Camera.Instance.derivedPosition.X.ToString("F1") + ", " +
@@ -136,24 +178,18 @@ namespace GraphicsLibrary.Hud
 			fields["display"].value = RenderWindow.Instance.Width.ToString("D") + "x" + RenderWindow.Instance.Height.ToString("D");
 			fields["window"].value = RenderWindow.Instance.WindowState + ", " + RenderWindow.Instance.WindowBorder;
 			fields["vsync"].value = RenderWindow.Instance.VSync.ToString();
-
-			fields["tl"].value = RenderWindow.Instance.localTime.ToString("F2");
+			
 			fields["tw"].value = RenderWindow.Instance.worldTime.ToString("F2");
-			fields["td"].value = (RenderWindow.Instance.worldTime - RenderWindow.Instance.localTime).ToString("F2");
-			fields["lf"].value = RenderWindow.Instance.lf.ToString("F3");
-			fields["warp"].value = Math.Pow(RenderWindow.Instance.b, 1.0 / 3.0).ToString("F3");
-			fields["v"].value = RenderWindow.Instance.v.ToString("F1");
-			fields["vc"].value = RenderWindow.Instance.b.ToString("F4");
-			fields["c"].value = RenderWindow.Instance.c.ToString("F1");
-			fields["timeMult"].value = RenderWindow.Instance.timeMultiplier.ToString("F4");
 
-			fields["enAb"].value = RenderWindow.Instance.enableRelAberration ? "on " : "off";
-			fields["enBr"].value = RenderWindow.Instance.enableRelBrightness ? "on " : "off";
-			fields["enDo"].value = RenderWindow.Instance.enableDoppler ? "on " : "off";
+            fields["occludecount"].value = occlusionStatOccluded + "/" + occlusionStatTotal + " (" + 100*occlusionStatOccluded/Math.Max(1,occlusionStatTotal) + "%)";
+            occlusionStatOccluded = occlusionStatTotal = 0;
+            fields["threadnum"].value = threadNum.ToString();
 
-			xGraph.value = (byte)((256 * Camera.Instance.position.X) / 4096);
-			yGraph.value = (byte)((256 * Camera.Instance.position.Y) / 4096);
-			zGraph.value = (byte)((256 * Camera.Instance.position.Z) / 4096);
+			xGraph.value = (byte)((256 * Camera.Instance.position.X) / 16);
+			yGraph.value = (byte)((256 * Camera.Instance.position.Y) / 16);
+			zGraph.value = (byte)((256 * Camera.Instance.position.Z) / 16);
+
+            
 		}
 	}
 }

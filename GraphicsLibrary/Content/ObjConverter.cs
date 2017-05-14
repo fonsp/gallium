@@ -324,6 +324,7 @@ namespace GraphicsLibrary.Content
 				output.polygonList.Add(new Polygon(vertexArr));
 			}
 			output.vertexArray = vOuput.ToArray();
+			output.vertexArrayLength = output.vertexArray.Length;
 			Debug.WriteLine("Obj conversion complete: " + faces.Count + " faces were converted.");
 			return output;
 		}

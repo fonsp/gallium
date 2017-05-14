@@ -92,10 +92,16 @@ namespace GraphicsLibrary.Core
 		/// Rendering pass, starting at 0.
 		/// </summary>
 		public int renderPass = 0;
+		public bool ignoreDrawDistance = true;
+
 		/// <summary>
 		/// Entity visibility.
 		/// </summary>
 		public bool isVisible = true;
+
+		public bool occlude = false;
+		public Vector3 occlusionOffset = Vector3.Zero;
+		public float occlusionRadius = 16f;
 
 		/// <summary>
 		/// All children attached to this node.
@@ -328,8 +334,8 @@ namespace GraphicsLibrary.Core
 		{
 			if(children.ContainsValue(node))
 			{
-				node = null;
 				children.Remove(node.name); //TODO: performance
+				node = null;
 			}
 		}
 
@@ -415,6 +421,44 @@ namespace GraphicsLibrary.Core
 			position = newPos;
 		}
 
+		public static Vector3 directionUp, directionRight, directionFront, occlusionTop, occlusionRight, occlusionBottom, occlusionLeft,
+			occlusionTAlt, occlusionRAlt, occlusionBAlt, occlusionLAlt;
+		internal static bool directionsComputed = false;
+		//private static int dominantOcclusionCoordinate;
+
+		private bool IsOccluded()
+		{
+			//return false;
+			Vector3 gramResult;
+			Vector3 pos = derivedPosition + occlusionOffset - Camera.Instance.position;
+			gramResult = GramSchmidt3(directionUp, directionRight, pos);
+			if(Vector3.Dot(gramResult, directionFront) < -occlusionRadius)
+			{
+				return true;
+			}
+			/*gramResult = GramSchmidt3(occlusionTop, directionRight, pos);
+			if(Vector3.Dot(gramResult, occlusionTAlt) < -occlusionRadius)
+			{
+				return true;
+			}
+			gramResult = GramSchmidt3(occlusionBottom, directionRight, pos);
+			if(Vector3.Dot(gramResult, occlusionBAlt) < -occlusionRadius)
+			{
+				return true;
+			}*/
+			gramResult = GramSchmidt3(occlusionRight, directionUp, pos);
+			if(Vector3.Dot(gramResult, occlusionRAlt) < -occlusionRadius)
+			{
+				return true;
+			}
+			gramResult = GramSchmidt3(occlusionLeft, directionUp, pos);
+			if(Vector3.Dot(gramResult, occlusionLAlt) < -occlusionRadius)
+			{
+				return true;
+			}
+			return false;
+		}
+
 		/// <summary>
 		/// Renders the Node (if possible) and all its children. Recursive call.
 		/// </summary>
@@ -422,22 +466,83 @@ namespace GraphicsLibrary.Core
 		{
 			if(isVisible)
 			{
-				Render(pass);
-				foreach(Node n in children.Values)
+				if(occlude)
 				{
-					n.StartRender(pass);
+                    if (pass == -1)
+                    {
+                        if (Math.Abs(Camera.Instance.derivedPosition.X - derivedPosition.X) > RenderWindow.Instance.shadowWidth / 2f)
+                        {
+                            return;
+                        }
+                        if (Math.Abs(Camera.Instance.derivedPosition.Z - derivedPosition.Z) > RenderWindow.Instance.shadowWidth / 2f)
+                        {
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        Hud.HudDebug.occlusionStatTotal++;
+                        if (!directionsComputed)
+                        {
+                            Camera.Instance.GetDirections(out directionUp, out directionRight, out directionFront);
+                            float tan = (float)Math.Tan(Camera.Instance.Fov * 3.14159f / 360f);
+                            occlusionTop = Vector3.Normalize(directionFront + tan * directionUp); // TODOO: Normalize necessary?
+                            occlusionRight = Vector3.Normalize(directionFront + tan * directionRight * Camera.Instance.width / Camera.Instance.height); // TODOO: Normalize necessary?
+                            occlusionBottom = Vector3.Normalize(directionFront - tan * directionUp); // TODOO: Normalize necessary?
+                            occlusionLeft = Vector3.Normalize(directionFront - tan * directionRight * Camera.Instance.width / Camera.Instance.height); // TODOO: Normalize necessary?
+
+                            occlusionTAlt = Vector3.Cross(occlusionTop, directionRight);
+                            occlusionBAlt = Vector3.Cross(directionRight, occlusionBottom);
+                            occlusionLAlt = Vector3.Cross(occlusionLeft, directionUp);
+                            occlusionRAlt = Vector3.Cross(directionUp, occlusionRight);
+
+                            directionsComputed = true;
+                        }
+                        if (IsOccluded())
+                        {
+                            //Console.WriteLine(name + "occluded!");
+                            Hud.HudDebug.occlusionStatOccluded++;
+                            return;
+                        }
+                    }
+				}
+
+				/*if(!ignoreDrawDistance && (Camera.Instance.position - derivedPosition).Length > RenderWindow.Instance.drawDistance)
+				{
+					
+				}*/
+				Render(pass);
+				lock(children)
+				{
+					foreach(Node n in children.Values)
+					{
+						n.StartRender(pass);
+					}
 				}
 			}
 		}
+
+
 
 		public virtual void Render(int pass)
 		{
 		}
 
-		public static Vector3 RotateVector(Vector3 vector, Quaternion quaternion)
+		public static Vector3 RotateVector(Vector3 vector, Quaternion quaternion) // TODO: Should be conj(q) * v * q
 		{
 			Vector3 t = 2 * Vector3.Cross(quaternion.Xyz, vector);
 			return vector + quaternion.W * t + Vector3.Cross(quaternion.Xyz, t);
+		}
+
+		private static Vector3 GramSchmidt3(Vector3 baseA, Vector3 baseB, Vector3 v)
+		{
+			v = v - GramSchmidtProject(baseA, v);
+			return v - GramSchmidtProject(baseB, v);
+		}
+
+		private static Vector3 GramSchmidtProject(Vector3 basis, Vector3 toProj)
+		{
+			return Vector3.Dot(toProj, basis) / Vector3.Dot(basis, basis) * basis;
 		}
 	}
 
