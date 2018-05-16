@@ -66,7 +66,7 @@ namespace GraphicsLibrary.Hud
 
             NewField("tw", 0, AlignMode.Right, "World time: ", " s");
             NewField("occludecount", 2, AlignMode.Right, "Occluded: ", "");
-            NewField("threadnum", 3, AlignMode.Right, "Working threads: ", "");
+            NewField("tasknum", 3, AlignMode.Right, "Working tasks: ", "");
 
             cpuGraphContainer.position.Y = 5 * 14;
             Add(cpuGraphContainer);
@@ -142,7 +142,7 @@ namespace GraphicsLibrary.Hud
 		private int fCount = 0;
 		private float fTime = 0f;
 
-        public static int occlusionStatOccluded, occlusionStatTotal, threadNum;
+        public static int occlusionStatOccluded, occlusionStatTotal, taskNum;
         private PerformanceCounter pCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total");
 
 		public override void Update(float timeSinceLastUpdate)
@@ -183,7 +183,7 @@ namespace GraphicsLibrary.Hud
 
             fields["occludecount"].value = occlusionStatOccluded + "/" + occlusionStatTotal + " (" + 100*occlusionStatOccluded/Math.Max(1,occlusionStatTotal) + "%)";
             occlusionStatOccluded = occlusionStatTotal = 0;
-            fields["threadnum"].value = threadNum.ToString();
+            fields["tasknum"].value = taskNum.ToString();
 
 			xGraph.value = (byte)((256 * Camera.Instance.position.X) / 16);
 			yGraph.value = (byte)((256 * Camera.Instance.position.Y) / 16);

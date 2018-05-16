@@ -20,10 +20,10 @@ namespace GraphicsLibrary.Voxel
 		public float viewRadius = 48f;
 
 		Dictionary<IntVector, Entity> generatedEntities = new Dictionary<IntVector, Entity>();
-		Dictionary<IntVector, Thread> constructionThreads = new Dictionary<IntVector, Thread>();
-		Dictionary<IntVector, ConstructionThreadParameters> constructionThreadParameters = new Dictionary<IntVector, ConstructionThreadParameters>();
+		Dictionary<IntVector, Task> constructionTasks = new Dictionary<IntVector, Task>();
+		Dictionary<IntVector, ConstructionTaskParameters> constructionTaskParameters = new Dictionary<IntVector, ConstructionTaskParameters>();
 		List<IntVector> needUpdate = new List<IntVector>();
-		List<Thread> threadsToStart = new List<Thread>();
+		List<Task> tasksToStart = new List<Task>();
 
         private Thread chunkSavingThread;
 
@@ -32,8 +32,8 @@ namespace GraphicsLibrary.Voxel
 			world = new World();
 		}
 
-		int numberOfThreadsStarted = 0;
-		int currentNumberOfStartedThreads = 0;
+		int numberOfTasksStarted = 0;
+		int currentNumberOfStartedTasks = 0;
 		float donesomethingtimer = 0f;
 
 		// TODO: This could probably be dynamic.
@@ -41,7 +41,7 @@ namespace GraphicsLibrary.Voxel
 
 		public override void Update(float timeSinceLastUpdate)
 		{
-			numberOfThreadsStarted = 0;
+			numberOfTasksStarted = 0;
 			IntVector d = new IntVector((int)Math.Floor(Camera.Instance.position.X / 16), (int)Math.Floor(Camera.Instance.position.Z / 16));
 
 			Stopwatch stopwatch = new Stopwatch();
@@ -66,29 +66,29 @@ namespace GraphicsLibrary.Voxel
 						}
 
 						//Console.WriteLine("NOW AT {0}", dd);
-						if((!generatedEntities.ContainsKey(dd)) && (!constructionThreads.ContainsKey(dd)))
+						if((!generatedEntities.ContainsKey(dd)) && (!constructionTasks.ContainsKey(dd)))
 						{
 							
 							//Console.WriteLine("ConstrThr created at {0} on {1}", dd, time);
-							ConstructionThreadParameters para = new ConstructionThreadParameters(dd);
-							Thread t = new Thread(() => ASyncChunkGenerate(para));
-                            t.Name = "CT" + dd;
-							constructionThreadParameters.Add(dd, para);
-							constructionThreads.Add(dd, t);
+							ConstructionTaskParameters para = new ConstructionTaskParameters(dd);
+							Task t = new Task(() => ASyncChunkGenerate(para));
+                            //t.Name = "CT" + dd;
+							constructionTaskParameters.Add(dd, para);
+							constructionTasks.Add(dd, t);
 
 
 							//t.Start();
-							threadsToStart.Add(t);
+							tasksToStart.Add(t);
 
 						}
 						if(dist <= hardRadius)
 						{
-							Thread t = null;
-							lock(constructionThreads)
+							Task t = null;
+							lock(constructionTasks)
 							{
-								if(constructionThreads.ContainsKey(dd))
+								if(constructionTasks.ContainsKey(dd))
 								{
-									t = constructionThreads[dd];
+									t = constructionTasks[dd];
 								}
 
 								if(t != null)
@@ -96,13 +96,13 @@ namespace GraphicsLibrary.Voxel
 									Console.WriteLine("Hard radius reached at {0}.", dd);
 									//t.Start();
 
-									if(threadsToStart.Contains(t))
+									if(tasksToStart.Contains(t))
 									{
-										threadsToStart.Remove(t);
+										tasksToStart.Remove(t);
 										t.Start();
 									}
 
-									t.Join();
+									t.Wait();
 									hardLimitsToComplete.Add(dd);
 								}
 							}
@@ -118,24 +118,27 @@ namespace GraphicsLibrary.Voxel
 			}
 
 
-			// TODO: 1? Should be more. Some thread starts cost ~20ms for some reason, while others cost < 2ms.
-			while(numberOfThreadsStarted < 1 && threadsToStart.Count != 0)
+			// TODO: 1? Should be more. Some task starts cost ~20ms for some reason, while others cost < 2ms.
+			while(numberOfTasksStarted < 1 && tasksToStart.Count != 0)
 			{
 				stopwatch.Start();
 
-				threadsToStart[0].Start();
-				threadsToStart.RemoveAt(0);
-				numberOfThreadsStarted++;
-				currentNumberOfStartedThreads++;
+				tasksToStart[0].Start();
+				numberOfTasksStarted++;
+				currentNumberOfStartedTasks++;
 
-				//stopwatch.Stop(); if(stopwatch.ElapsedMilliseconds >= 0) { Console.WriteLine("{0}, {1}", constructionThreads.Count, stopwatch.ElapsedMilliseconds); }
+				stopwatch.Stop();
+				Console.WriteLine(tasksToStart[0].Status.ToString());
+				tasksToStart.RemoveAt(0);
+
+				if(stopwatch.ElapsedMilliseconds >= 0) { Console.WriteLine("{0}, {1}", constructionTasks.Count, stopwatch.ElapsedMilliseconds); }
 			}
 			
 			
-			// TODO: Make this dynamic.
-			if(constructionThreads.Count != 0 && timeSinceLastUpdate < .03333f)
+			// TODO: If running on a single thread this might be necessary.
+			if(constructionTasks.Count != 0 && timeSinceLastUpdate < .03333f)
 			{
-				Thread.Sleep(10);
+				//Thread.Sleep(10);
 			}
 
 			donesomethingtimer -= timeSinceLastUpdate;
@@ -148,12 +151,12 @@ namespace GraphicsLibrary.Voxel
 
 			int count = 0;
 
-			lock(constructionThreadParameters)
+			lock(constructionTaskParameters)
 			{
 				List<IntVector> toRemove = new List<IntVector>();
-				foreach(KeyValuePair<IntVector, ConstructionThreadParameters> pair in constructionThreadParameters)
+				foreach(KeyValuePair<IntVector, ConstructionTaskParameters> pair in constructionTaskParameters)
 				{
-					ConstructionThreadParameters para = pair.Value;
+					ConstructionTaskParameters para = pair.Value;
 					IntVector dd = pair.Key;
 					if(hardLimitsToComplete.Contains(dd) || donesomethingtimer <= 0f)
 					{
@@ -161,11 +164,11 @@ namespace GraphicsLibrary.Voxel
 						{
 							
 
-							if(!constructionThreads.ContainsKey(dd))
+							if(!constructionTasks.ContainsKey(dd))
 							{
 								throw new Exception();
 							}
-							Thread t = constructionThreads[dd];
+							Task t = constructionTasks[dd];
 
 							donesomethingtimer += completionDelay;
 							
@@ -184,14 +187,14 @@ namespace GraphicsLibrary.Voxel
 
 							count++;
 
-							currentNumberOfStartedThreads--;
+							currentNumberOfStartedTasks--;
 						}
 					}
 				}
 				foreach(IntVector dd in toRemove)
 				{
-					constructionThreads.Remove(dd);
-					constructionThreadParameters.Remove(dd);
+					constructionTasks.Remove(dd);
+					constructionTaskParameters.Remove(dd);
 				}
 			}
 			if(donesomethingtimer == completionDelay)
@@ -225,7 +228,7 @@ namespace GraphicsLibrary.Voxel
 
             toUnload.ForEach(x => UnloadChunk(x));
 
-            Hud.HudDebug.threadNum = constructionThreads.Count();
+            Hud.HudDebug.taskNum = constructionTasks.Count();
 		}
 
 		
@@ -251,9 +254,9 @@ namespace GraphicsLibrary.Voxel
 			}
 		}*/
 
-		private static void ASyncChunkGenerate(ConstructionThreadParameters para)
+		private static void ASyncChunkGenerate(ConstructionTaskParameters para)
 		{
-            //Console.WriteLine("Thread STARTED at {0}", para.d);
+            //Console.WriteLine("Task STARTED at {0}", para.d);
 
             //TODO: CHECK IF CHUNK IS NOT IN TOSAVE LIST
 
@@ -264,16 +267,18 @@ namespace GraphicsLibrary.Voxel
 			para.entity.occlude = true;
 			para.entity.occlusionOffset = new Vector3(8f, 64f, 8f);
             para.entity.occlusionRadius = 65f;
+
 			para.entity.mesh = para.chunk.GenerateMesh();
+
 			para.entity.mesh.useVBO = true;
 			para.entity.mesh.material.textureName = "terrain";
             para.entity.mesh.material.AddTransitionColor(new OpenTK.Graphics.Color4(1f, 1f, 1f, 0f), 0f);
             para.entity.materialLifetime = .2f;
             //para.entity.mesh.material.AddTransitionColor(new OpenTK.Graphics.Color4(1f, 1f, 1f, 1f), 1f);
             para.entity.mesh.material.enableColorTransitions = true;
-            //cent.mesh.GenerateVBO(); ////FIXIXXXXX
+            //cent.mesh.GenerateVBO(); ////TODO: FIXIXXXXX
             para.done = true;
-			//Console.WriteLine("Thread COMPLETED at {0}", para.d);
+			//Console.WriteLine("Task COMPLETED at {0}", para.d);
 		}
 
 		private void ChunkUpdate(IntVector d)
@@ -321,13 +326,13 @@ namespace GraphicsLibrary.Voxel
 			SetBlock(position.X, position.Y, position.Z, value);
 		}
 
-		public void FinishAllThreadwork()
+		public void FinishAllTaskwork()
 		{
-			foreach(KeyValuePair<IntVector, Thread> pair in constructionThreads)
+			foreach(KeyValuePair<IntVector, Task> pair in constructionTasks)
 			{
-				pair.Value.Join();
+				pair.Value.Wait();
 			}
-			while(constructionThreads.Count != 0)
+			while(constructionTasks.Count != 0)
 			{
 				Update(.1f);
 			}
@@ -335,11 +340,12 @@ namespace GraphicsLibrary.Voxel
 
 		public void UnloadChunk(IntVector d)
 		{
-			if(constructionThreads.ContainsKey(d))
+			if(constructionTasks.ContainsKey(d))
 			{
-				constructionThreads[d].Abort();
-				constructionThreads.Remove(d);
-				constructionThreadParameters.Remove(d);
+				// TODO: Should cancel instead of await: task should be cancelable.
+				constructionTasks[d].Wait();
+				constructionTasks.Remove(d);
+				constructionTaskParameters.Remove(d);
 			}
 			if(needUpdate.Contains(d))
 			{
@@ -355,8 +361,8 @@ namespace GraphicsLibrary.Voxel
 
 			Chunk chunk = world.GetChunk(d);
 			//ChunkLoader.SaveChunk(chunk);
-			ChunkLoader.SaveChunkASync(chunk);
-			Console.WriteLine("Chunk save requested " + d);
+			//ChunkLoader.SaveChunkASync(chunk);
+			//Console.WriteLine("Chunk save requested " + d);
 
 			// TODO: Nullify?
 			//chunk = null;
@@ -368,7 +374,7 @@ namespace GraphicsLibrary.Voxel
 
 		public void UnloadAll()
 		{
-			FinishAllThreadwork();
+			FinishAllTaskwork();
 			while(generatedEntities.Count != 0)
 			{
 				UnloadChunk(generatedEntities.First().Key);
@@ -376,14 +382,14 @@ namespace GraphicsLibrary.Voxel
 		}
 	}
 
-	public class ConstructionThreadParameters
+	public class ConstructionTaskParameters
 	{
 		public bool done = false;
 		public IntVector d;
 		public Chunk chunk;
 		public Entity entity;
 
-		public ConstructionThreadParameters(IntVector d)
+		public ConstructionTaskParameters(IntVector d)
 		{
 			this.d = d;
 		}
