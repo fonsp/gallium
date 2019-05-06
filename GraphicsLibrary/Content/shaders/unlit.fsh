@@ -12,6 +12,8 @@ varying float dopp;
 uniform sampler2D tex;
 uniform sampler2D shadowTex;
 
+varying vec3 cameradir;
+
 vec3 rainbow(float x)
 {
 	/*
@@ -42,18 +44,43 @@ vec3 rainbow(float x)
 void main()
 {
 	vec4 fragout = texture2D(tex, gl_TexCoord[0].xy) * gl_Color;
-	/*if((effects / 2) % 2 == 1)
+	
+	vec3 sundir = normalize(gl_LightSource[0].position.xyz);
+
+
+	float sun_angle_cos = dot(sundir, cameradir);
+	float sunsq = (sun_angle_cos > 0.0 ? sun_angle_cos * sun_angle_cos : 0.0);
+	float rayleighphase = (1.0 + sunsq) / 2.0;
+	float irradiance = dot(sundir, vec3(0.0, 1.0, 0.0)) + 0.3;
+
+	float optical_depth = 1000.0;
+
+	fragout.rgb = vec3(0.0);
+
+	float the_integral = 0.0;
+
+	vec3 cn = normalize(cameradir);
+	for(float h = 0.0; h < 12345.0; h += 1000.0)
 	{
-		fragout = fragout * vec4(vec3(1.0 / sqrt(1.0 - bL * bL) + dopp), 1.0);
+		the_integral += exp(-(h*cn.y) / optical_depth);
 	}
-	if((effects / 4) % 2 == 1)
-	{
-		vec4 shift = vec4(1.0);
-		shift.r = 2 * max(0, 0.5 - abs(dopp + 0.0)) * fragout.r + 2 * max(0, 0.5 - abs(dopp + 0.5)) * fragout.g + 2 * max(0, 0.5 - abs(dopp + 1.0)) * fragout.b;
-		shift.g = 2 * max(0, 0.5 - abs(dopp - 0.5)) * fragout.r + 2 * max(0, 0.5 - abs(dopp + 0.0)) * fragout.g + 2 * max(0, 0.5 - abs(dopp + 0.5)) * fragout.b;
-		shift.b = 2 * max(0, 0.5 - abs(dopp - 1.0)) * fragout.r + 2 * max(0, 0.5 - abs(dopp - 0.5)) * fragout.g + 2 * max(0, 0.5 - abs(dopp + 0.0)) * fragout.b;
-		fragout = shift;
-	}*/
+
+	fragout.r = .10 * rayleighphase * the_integral;
+	fragout.g = .15 * rayleighphase * the_integral;
+	fragout.b = .25 * rayleighphase * the_integral;
+	
+
+	fragout.r = 0.4 * sunsq / (0.5 + the_integral * 0.05) + 0.4 * (the_integral + 2.0) * .17 * irradiance;
+	fragout.g = 0.4 * sunsq / (0.5 + the_integral * 0.15) + 0.5 * (the_integral + 2.0) * .17 * irradiance;
+	fragout.b = 0.4 * sunsq / (0.5 + the_integral * 0.35) + 0.8 * (the_integral + 2.0) * .17 * irradiance;
+
+	if (cameradir.y < 0) {
+		fragout.rgb = vec3(0.2, 0.25, 0.3) * irradiance;
+	}
+
 	//fragout.xyz = rainbow(fragout.x);
+	//fragout.xyz = cameradir;
+	//fragout.xyz = vec3(rayleighphase)/2.0;
+	//fragout.xyz = vec3(the_integral * 0.35);
 	gl_FragColor = fragout;
 }

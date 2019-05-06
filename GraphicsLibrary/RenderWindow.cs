@@ -87,8 +87,8 @@ namespace GraphicsLibrary
 		public int amountOfRenderPasses = 2;
 		public float drawDistance = 300f;
 
-		public float fogStart = 160f;
-		public float fogEnd = 640f;
+		public float fogStart = 40f;
+		public float fogEnd = 80f;
 		public Color4 fogColor = Color4.White;
         public Vector3 lightDir = new Vector3(2.2354324f, 2, 1.01243f);
 
@@ -134,7 +134,7 @@ namespace GraphicsLibrary
 			WindowBorder = WindowBorder.Resizable;
 			try
 			{
-				GL.ClearColor(Color.White);
+				GL.ClearColor(Color.Black);
 				GL.ShadeModel(ShadingModel.Smooth);
 				GL.Hint(HintTarget.PerspectiveCorrectionHint, HintMode.Nicest);
 				//GL.Enable(EnableCap.ColorMaterial);

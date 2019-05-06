@@ -4,6 +4,7 @@ using GraphicsLibrary.Core;
 using GraphicsLibrary.Hud;
 using GraphicsLibrary.Voxel;
 using OpenTK;
+using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 
 namespace Gallium.Program
@@ -42,8 +43,23 @@ namespace Gallium.Program
 
 			testHueScale.mesh = ObjConverter.ConvertObjToMesh(File.ReadAllText(@"Content/models/monsterUVd.obj"), new Vector3(101, -19, 205));
 			monster.mesh = ObjConverter.ConvertObjToMesh(File.ReadAllText(@"Content/models/monsterUVd.obj"), new Vector3(101, -19, 205));
-			monster.scale = new Vector3(.1f, .1f, .1f);
-			skybox.mesh = ObjConverter.ConvertObjToMesh(File.ReadAllText(@"Content/models/skybox3.obj"));
+			monster.scale = new Vector3(1f, 1f, 1f);
+			skybox.mesh = ObjConverter.ConvertObjToMesh(File.ReadAllText(@"Content/models/sphere.obj"));
+			//skybox.scale = new Vector3(10000f, 10000f, 10000f);
+			for(int i = 0; i < skybox.mesh.polygonList.Count; i++)
+			{
+				var verts = skybox.mesh.polygonList[i].vertices;
+				for (int j = 0; j < verts.Length; j++)
+				{
+					verts[j].pos *= -1000f;
+					/*float temp = verts[j].pos.Y;
+					verts[j].pos.Y = verts[j].pos.X;
+					verts[j].pos.X = -temp;*/
+				}
+			}
+
+			skybox.mesh.material.baseColor = Color4.BlanchedAlmond;
+			//skybox.scale = new Vector3(-1f, -1f, -1f);
             screen.mesh = ObjConverter.ConvertObjToMesh(File.ReadAllText(@"Content/models/slide.obj"));
 
 			//mapCollision.AddRange(ObjConverter.ConvertObjToAABBarray(File.ReadAllText(@"Content/models/map1/collision.obj")));
