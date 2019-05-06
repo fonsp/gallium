@@ -51,7 +51,8 @@ namespace GraphicsLibrary.Voxel
 
 		public static Chunk GenerateTempChunkAt(IntVector d)
 		{
-			if(ChunkLoader.ChunkIsSaved(d))
+			//TODO: not async safe
+			if(false && ChunkLoader.ChunkIsSaved(d))
 			{
 				//Console.WriteLine("Loaded from file!");
 				return ChunkLoader.LoadChunk(d);

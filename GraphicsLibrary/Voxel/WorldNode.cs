@@ -14,10 +14,10 @@ namespace GraphicsLibrary.Voxel
 	public class WorldNode : Node
 	{
 		public World world;
-		public int hardRadius = 2;
-		public int softRadius = 10;
+		public int hardRadius = 1;
+		public int softRadius = 2;
 		public int unloadBorder = 2;
-		public float viewRadius = 48f;
+		public float viewRadius = 24f;
 
 		Dictionary<IntVector, Entity> generatedEntities = new Dictionary<IntVector, Entity>();
 		Dictionary<IntVector, Task> constructionTasks = new Dictionary<IntVector, Task>();
@@ -25,11 +25,12 @@ namespace GraphicsLibrary.Voxel
 		List<IntVector> needUpdate = new List<IntVector>();
 		//List<Task> tasksToStart = new List<Task>();
 
-		private Thread chunkSavingThread;
+		//private Thread chunkSavingThread;
 
 		public WorldNode(string name) : base(name)
 		{
 			world = new World();
+			ThreadPool.SetMinThreads(100, 100);
 		}
 
 		//int numberOfTasksStarted = 0;
@@ -37,7 +38,7 @@ namespace GraphicsLibrary.Voxel
 		float donesomethingtimer = 0f;
 
 		// TODO: This could probably be dynamic.
-		public const float completionDelay = 0.02f;
+		public const float completionDelay = 0.00f;
 
 		public override void Update(float timeSinceLastUpdate)
 		{
@@ -46,12 +47,15 @@ namespace GraphicsLibrary.Voxel
 
 			Stopwatch stopwatch = new Stopwatch();
 			Stopwatch stopwatch2 = new Stopwatch();
+			Stopwatch stopwatch3 = new Stopwatch();
 
 
 			IntVector i = new IntVector(0, 1);
 			List<IntVector> hardLimitsToComplete = new List<IntVector>();
 			List<Task> hardLimitsToAwait = new List<Task>();
 
+
+			stopwatch3.Start();
 			for(int dist = 0; dist <= softRadius; dist++)
 			{
 				IntVector dd = d + new IntVector(dist, dist);
@@ -122,6 +126,13 @@ namespace GraphicsLibrary.Voxel
 					dir *= i;
 				}
 			}
+
+			stopwatch3.Stop();
+			if(stopwatch3.ElapsedMilliseconds > 0)
+			{
+				Debug.WriteLine("~~~~~~~~Starting CtorTasks took {0} ms", stopwatch3.ElapsedMilliseconds);
+			}
+			stopwatch3.Reset();
 
 			Task.WaitAll(hardLimitsToAwait.ToArray());
 
@@ -247,6 +258,10 @@ namespace GraphicsLibrary.Voxel
 			toUnload.ForEach(x => UnloadChunk(x));
 
 			Hud.HudDebug.taskNum = constructionTasks.Count();
+
+			//int consnum, whatevernum;
+			//ThreadPool.GetMinThreads(out consnum, out whatevernum);
+			//Debug.WriteLine("{0} {1}", consnum, whatevernum);
 		}
 
 
@@ -275,11 +290,18 @@ namespace GraphicsLibrary.Voxel
 		private static async Task GenerateChunkAsync(ConstructionTaskParameters para)
 		{
 			await Task.Run(() => GenerateChunk(para));
+			//await Task.Factory.StartNew(() => GenerateChunk(para), TaskCreationOptions.LongRunning);
 		}
 
 		private static void GenerateChunk(ConstructionTaskParameters para)
 		{
 			//Thread.Sleep(1000);
+			Func<int, int, int> modulo = (n, m) =>
+			{
+				int r = n % m;
+				return r < 0 ? r + m : r;
+			};
+			Thread.Sleep(10 + 10*modulo((para.d.x + para.d.y) * 13, 29));
 			//Debug.WriteLine("Task STARTED at {0}", para.d);
 
 			//TODO: CHECK IF CHUNK IS NOT IN TOSAVE LIST

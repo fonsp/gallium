@@ -151,10 +151,6 @@ namespace GraphicsLibrary.Voxel
 							vertices.Add(corner + new Vector3(1, 1, 1));
 							vertices.Add(corner + new Vector3(0, 1, 1));
 
-							int[] vertexIndices;
-							int[] normalIndices = new int[3];
-							int[] textureIndices = new int[3];
-
 							//int bti = currentBlock + (currentBlock / 16);
 
 							//int[] texA = new int[] { 17 + bti, 1 + bti, 18 + bti };
@@ -225,7 +221,7 @@ namespace GraphicsLibrary.Voxel
 			faces = null;
 			vertices = null;
 			vOuput = null;
-			GC.Collect();
+			//GC.Collect();
 		}
 
 		private byte GetOutsideRange(int x, int y, int z)
