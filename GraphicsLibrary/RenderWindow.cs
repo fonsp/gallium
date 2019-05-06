@@ -349,7 +349,7 @@ namespace GraphicsLibrary
 				Debug.WriteLine("WARNING: custom resources could not be loaded: " + exception.Message + " @ " + exception.Source, Color4.Red);
 			}*/
 
-			Debug.WriteLine(TextureManager.numberOfTextures + " textures were loaded");
+			Debug.WriteLine("{0} textures were loaded", TextureManager.numberOfTextures);
 
 			#endregion
 			#region Hud Console
@@ -421,7 +421,7 @@ namespace GraphicsLibrary
 			hudConsole.position = new Vector2(0, ClientRectangle.Height - hudConsole.height);
 
 			program.Resize(ClientRectangle);
-			Debug.WriteLine("Window and FBO resized to " + ClientRectangle);
+			Debug.WriteLine("Window and FBO resized to {0}", ClientRectangle);
 		}
 
 		public void UpdateViewport()

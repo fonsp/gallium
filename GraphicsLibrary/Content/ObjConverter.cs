@@ -325,7 +325,7 @@ namespace GraphicsLibrary.Content
 			}
 			output.vertexArray = vOuput.ToArray();
 			output.vertexArrayLength = output.vertexArray.Length;
-			Debug.WriteLine("Obj conversion complete: " + faces.Count + " faces were converted.");
+			Debug.WriteLine("Obj conversion complete: {0} faces were converted.", faces.Count);
 			return output;
 		}
 
@@ -418,7 +418,7 @@ namespace GraphicsLibrary.Content
 								}
 								catch(Exception e)
 								{
-									Debug.WriteLine("WARNING: obj conversion error with {" + s + "}: " + e.Message);
+									Debug.WriteLine("WARNING: obj conversion error with \"{0}\": {1}", s, e.Message);
 								}
 							}
 							//Face created

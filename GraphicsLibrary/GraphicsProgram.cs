@@ -40,14 +40,14 @@ namespace GraphicsLibrary
 			}
 			Debug.WriteLine("---------------");
 			Debug.WriteLine("Gallium");
-			Debug.WriteLine("v" + Assembly.GetExecutingAssembly().GetName().Version);
+			Debug.WriteLine("v{0}", Assembly.GetExecutingAssembly().GetName().Version);
 			Debug.WriteLine("---------------");
 			Debug.WriteLine("Created by:");
 			Debug.WriteLine("Fons van der Plas (fons-), fonsvdplas@gmail.com");
 			Debug.WriteLine("---------------");
 			Debug.WriteLine("https://github.com/fons-");
 			Debug.WriteLine("---------------");
-			Debug.WriteLine("Program launched at " + DateTime.Now);
+			Debug.WriteLine("Program launched at {0}", DateTime.Now);
 			Debug.Write("Received arguments: ");
 			int i;
 			for(i = 0; i < programArguments.Length - 1; i++)

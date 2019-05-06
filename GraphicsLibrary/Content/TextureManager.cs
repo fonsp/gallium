@@ -34,7 +34,7 @@ namespace GraphicsLibrary.Content
 			}
 			catch(Exception exception)
 			{
-				Debug.WriteLine("WARNING: TextureManager could not be created: " + exception.Message + " @ " + exception.Source);
+				Debug.WriteLine("WARNING: TextureManager could not be created: {0} @ {1}", exception.Message, exception.Source);
 			}
 		}
 
@@ -86,7 +86,7 @@ namespace GraphicsLibrary.Content
 			}
 			catch(Exception exception)
 			{
-				Debug.WriteLine("WARNING: failed to load texture " + name + " at " + path + ": " + exception.Message);
+				Debug.WriteLine("WARNING: failed to load texture {0} at {1}: {2}", name, path, exception.Message);
 			}
 
 		}
@@ -111,7 +111,7 @@ namespace GraphicsLibrary.Content
 			}
 			catch(Exception exception)
 			{
-				Debug.WriteLine("WARNING: Failed to remove texture " + name + ": " + exception.Message);
+				Debug.WriteLine("WARNING: Failed to remove texture {0}: {1}", name, exception.Message);
 			}
 
 		}
@@ -139,7 +139,7 @@ namespace GraphicsLibrary.Content
 			{
 				return mTexCache[name];
 			}
-			Debug.WriteLine("WARNING: failed to get texture " + name);
+			Debug.WriteLine("WARNING: failed to get texture {0}", name);
 			return mTexCache["default"];
 		}
 	}
