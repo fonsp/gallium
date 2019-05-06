@@ -54,6 +54,6 @@ void main()
 		shift.b = 2 * max(0, 0.5 - abs(dopp - 1.0)) * fragout.r + 2 * max(0, 0.5 - abs(dopp - 0.5)) * fragout.g + 2 * max(0, 0.5 - abs(dopp + 0.0)) * fragout.b;
 		fragout = shift;
 	}*/
-	fragout.xyz = rainbow(fragout.x);
+	//fragout.xyz = rainbow(fragout.x);
 	gl_FragColor = fragout;
 }
